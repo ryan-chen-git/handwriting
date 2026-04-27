@@ -1,0 +1,29 @@
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+AGENT_CONTEXT.md
+node_modules/
+
+# Raw stroke data (user-specific, not committed)
+data/raw_samples/
+
+# Regeneratable pipeline artifacts
+data/processed/
+data/variant_library/
+outputs/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.pdf
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+texput.log
+mathcode_debug.txt
+
+# Scratch/debug TeX
+test_debug*.tex
+test_fix*.tex

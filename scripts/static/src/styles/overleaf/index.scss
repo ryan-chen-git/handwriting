@@ -1,0 +1,16 @@
+// Overleaf vendored stylesheets, dark-only.
+// Using @import (legacy) so the shim's mixins are visible in every
+// downstream file without having to edit Overleaf's sources.
+
+@import 'shim';
+@import 'themed-tokens';
+@import 'foundations/colors';
+@import 'foundations/spacing';
+@import 'foundations/border-radius';
+@import 'foundations/typography';
+@import 'pages/editor/toolbar';
+@import 'pages/editor/toolbar-redesign';
+@import 'pages/editor/ide-redesign';
+@import 'pages/editor/rail';
+@import 'pages/editor/pdf';
+@import 'pages/editor/logs';

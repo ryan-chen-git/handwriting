@@ -1,0 +1,51 @@
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\usepackage{amsmath}
+
+\setmainfont{HandwritingFont.otf}[Path=./outputs/]
+\setmathfont{HandwritingFont.otf}[Path=./outputs/]
+\setmathfont{latinmodern-math.otf}[range={"2A00-"2AFF,"27C0-"27EF,cal,frak,bb,scr}]
+
+\begin{document}
+
+\section*{Vectors}
+
+Column vector:
+\[ \vec{v} = \begin{pmatrix} 1 \\ 2 \\ 3 \end{pmatrix} \]
+
+Dot product:
+\[ \vec{a} \cdot \vec{b} = a_1 b_1 + a_2 b_2 + a_3 b_3 \]
+
+Cross product:
+\[ \vec{a} \times \vec{b} = \begin{vmatrix} \vec{i} & \vec{j} & \vec{k} \\ a_1 & a_2 & a_3 \\ b_1 & b_2 & b_3 \end{vmatrix} \]
+
+\section*{Matrices}
+
+Matrix multiplication:
+\[ \begin{pmatrix} a & b \\ c & d \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} ax + by \\ cx + dy \end{pmatrix} \]
+
+Determinant:
+\[ \det(A) = \begin{vmatrix} a & b \\ c & d \end{vmatrix} = ad - bc \]
+
+Identity matrix:
+\[ I = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix} \]
+
+\section*{More Math}
+
+Quadratic formula:
+\[ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]
+
+Summation:
+\[ \sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6} \]
+
+Integral:
+\[ \int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2} \]
+
+Limit:
+\[ \lim_{x \to 0} \frac{\sin x}{x} = 1 \]
+
+Partial derivatives:
+\[ \frac{\partial f}{\partial x} = 2x + y, \quad \nabla f = \begin{pmatrix} \frac{\partial f}{\partial x} \\ \frac{\partial f}{\partial y} \end{pmatrix} \]
+
+\end{document}

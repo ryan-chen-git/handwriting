@@ -1,0 +1,104 @@
+// Shim that lets Overleaf's vendored stylesheets compile inside this project
+// without dragging in their full SCSS toolchain (Bootstrap, design-system
+// helpers, Express server context). Keeps theme=='default' (dark) and drops
+// every 'light' override block. Provides the tiny set of mixins / classes /
+// CSS custom properties that the vendored files reference.
+
+// --- theme() — only emit the dark theme; drop 'light' overrides --------
+@mixin theme($name) {
+  @if $name == 'default' or $name == 'dark' {
+    @content;
+  }
+}
+
+// --- typography mixins (no-op — we let the editor inherit body styles) --
+@mixin body-base {}
+@mixin body-sm { font-size: 13px; line-height: 1.4; }
+@mixin body-xs { font-size: 12px; line-height: 1.4; }
+@mixin heading-sm { font-size: 14px; font-weight: 600; line-height: 1.3; }
+
+// --- toolbar height helpers --------------------------------------------
+@mixin toolbar-sm-height {
+  min-height: 32px;
+  height: 32px;
+}
+@mixin toolbar-alt-bg {
+  background-color: var(--bg-dark-secondary);
+}
+
+// --- buttons ------------------------------------------------------------
+// Overleaf's ol-button-variant mixin has a non-trivial signature that varies
+// across call sites. We accept any args and emit a minimal style block —
+// only colour + background — using the first two args. This is enough for
+// visual parity since the bulk of button layout comes from sibling selectors.
+@mixin ol-button-variant($color, $background, $args...) {
+  background-color: #{$background};
+  color: #{$color};
+  // additional state args are intentionally ignored
+}
+
+@mixin editor-switcher-button {
+  background-color: transparent;
+  color: var(--content-primary-dark);
+  &:hover { background-color: var(--bg-dark-secondary); }
+}
+
+@mixin themed-links {
+  a { color: var(--green-50); &:hover { color: var(--green-60); } }
+}
+
+// --- bootstrap helpers we still reference -------------------------------
+@mixin media-breakpoint-up($name) {
+  @if $name == 'sm' { @media (min-width: 576px) { @content; } }
+  @else if $name == 'md' { @media (min-width: 768px) { @content; } }
+  @else if $name == 'lg' { @media (min-width: 992px) { @content; } }
+  @else if $name == 'xl' { @media (min-width: 1200px) { @content; } }
+  @else { @content; }
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// --- helper class referenced by @extend --------------------------------
+.full-size {
+  width: 100%;
+  height: 100%;
+}
+
+// --- minimum bootstrap-ish CSS vars our project doesn't provide --------
+:root {
+  --bs-btn-color: var(--content-primary-dark);
+  --bs-btn-bg: transparent;
+  --bs-btn-hover-color: var(--content-primary-dark);
+  --bs-btn-hover-bg: var(--bg-dark-secondary);
+  --bs-btn-active-color: var(--content-primary-dark);
+  --bs-btn-active-bg: var(--bg-dark-tertiary);
+  --bs-btn-padding-x: 12px;
+  --bs-btn-padding-y: 4px;
+  --bs-btn-border-radius: 4px;
+  --bs-btn-font-size: 13px;
+  --bs-btn-font-weight: 500;
+  --bs-btn-line-height: 1.4;
+  --bs-btn-border-color: transparent;
+  --bs-btn-border-width: 1px;
+  --bs-link-color: var(--green-50);
+  --bs-link-hover-color: var(--green-60);
+  --bs-body-color: var(--content-primary-dark);
+  --bs-body-bg: var(--bg-dark-primary);
+  --bs-body-font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+// --- abstract sass variables that toolbar.scss imports -----------------
+$header-height: 40px;
+$toolbar-height: 40px;
+$toolbar-small-height: 32px;
+$themes: ('default');

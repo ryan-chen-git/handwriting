@@ -1,0 +1,1017 @@
+// Project-specific overrides — small, additive. Most styling comes from
+// vendored Overleaf SCSS in styles/overleaf/, which itself sits on top of
+// Bootstrap 5 (imported earlier in main.tsx).
+
+* { box-sizing: border-box; }
+
+// =============================================================================
+// Global reset — Bootstrap sets light bg by default; force dark across the app
+// =============================================================================
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-dark-primary);
+  color: var(--content-primary-dark);
+  font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+input { color: inherit; font-family: inherit; }
+
+// Material Symbols default sizing — match Overleaf (20px in rail/toolbar)
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
+// =============================================================================
+// App layout shells
+// =============================================================================
+
+.ide-redesign-body {
+  display: grid;
+  grid-template-rows: 40px 1fr;
+  height: 100%;
+  background: var(--bg-dark-primary);
+}
+
+.ide-redesign-main {
+  display: grid;
+  // grid-template-columns is set inline by App.tsx so it can include the
+  // secondary rail panel when open
+  grid-template-columns: 40px 1fr;
+  min-height: 0;
+}
+
+.ide-redesign-split {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ide-redesign-editor-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-dark-primary);
+}
+
+.ide-redesign-pdf-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-dark-secondary);
+  position: relative;
+}
+
+// =============================================================================
+// Top bar — fill in pieces Overleaf's stylesheet expects but our markup omits
+// =============================================================================
+
+.ide-redesign-toolbar {
+  align-items: center;
+}
+
+.ide-redesign-toolbar-menu-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-04);
+  flex: 0 0 auto;
+}
+
+.ide-redesign-toolbar-logos {
+  display: flex;
+  align-items: center;
+}
+
+.ide-redesign-toolbar-home-button {
+  width: 32px;
+  height: 32px;
+}
+
+.ide-redesign-toolbar-home-link {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--green-50);
+  text-decoration: none;
+  color: #fff;
+  position: relative;
+
+  .toolbar-ol-logo {
+    display: block;
+    width: 18px;
+    height: 18px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  .toolbar-ol-home-button {
+    display: none;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    font-size: 18px;
+    color: #fff;
+  }
+
+  &:hover {
+    background: var(--green-60);
+    .toolbar-ol-logo { display: none; }
+    .toolbar-ol-home-button { display: flex; align-items: center; justify-content: center; }
+  }
+}
+
+.ide-redesign-toolbar-project-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--content-primary-dark);
+  align-self: center;
+  white-space: nowrap;
+}
+
+.ide-redesign-toolbar-menu {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.ide-redesign-toolbar-menu-item {
+  position: relative;
+}
+
+.ide-redesign-toolbar-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+  background: var(--bg-dark-secondary, #2f3a4c);
+  border: 1px solid var(--border-divider-dark);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-redesign-toolbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--content-primary-dark);
+  font-size: 13px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.ide-redesign-toolbar-button-subdued.active {
+  background: var(--bg-dark-secondary);
+  color: var(--content-primary-dark);
+}
+
+.ide-redesign-toolbar-button-primary {
+  background: var(--green-50);
+  color: #fff;
+  &:hover { background: var(--green-60); color: #fff; }
+}
+
+.ide-redesign-toolbar-button-subdued {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--content-primary-dark);
+
+  &:hover {
+    background: var(--bg-dark-secondary);
+    color: var(--content-primary-dark);
+  }
+
+  .material-symbols-outlined { font-size: 18px; }
+}
+
+.ide-redesign-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-01);
+}
+
+// =============================================================================
+// Left rail — center icons inside the 32×32 link slot. Overleaf's rule sets
+// `line-height: 32px` on the icon span, which works for font glyphs.
+// =============================================================================
+
+.ide-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.ide-rail-tabs-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ide-rail-tab-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: block;
+  margin: 0 auto;
+}
+
+.ide-rail-tab-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+}
+
+.ide-rail-tab-button {
+  background: transparent;
+  border: 0;
+  color: var(--content-secondary-dark);
+  cursor: pointer;
+  border-radius: 4px;
+  &:hover { background: var(--bg-dark-secondary); color: var(--content-primary-dark); }
+  &.active {
+    background: var(--bg-dark-secondary);
+    color: var(--content-primary-dark);
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: var(--green-50);
+      border-radius: 2px;
+    }
+  }
+}
+
+// =============================================================================
+// Secondary rail panel (opens between rail and editor)
+// =============================================================================
+
+.ide-rail-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-dark-secondary);
+  border-right: 1px solid var(--border-divider-dark);
+  overflow: hidden;
+}
+
+.ide-rail-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding: 0 6px 0 12px;
+  border-bottom: 1px solid var(--border-divider-dark);
+  flex: 0 0 auto;
+}
+
+.ide-rail-panel-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--content-secondary-dark);
+}
+
+.ide-rail-panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--content-secondary-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); color: var(--content-primary-dark); }
+  .material-symbols-outlined { font-size: 16px; }
+}
+
+.ide-rail-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  font-size: 13px;
+  color: var(--content-primary-dark);
+}
+
+.ide-rail-panel-subheader {
+  margin: 10px 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--content-secondary-dark);
+  opacity: 0.85;
+}
+
+.ide-rail-panel-hint {
+  padding: 8px 6px;
+  font-size: 12px;
+  color: var(--content-secondary-dark);
+  opacity: 0.75;
+  code {
+    font-family: "Source Code Pro", monospace;
+    background: rgba(255,255,255,0.05);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+}
+
+.ide-rail-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 12px;
+  color: var(--content-secondary-dark);
+  opacity: 0.7;
+  text-align: center;
+  .material-symbols-outlined { font-size: 28px; opacity: 0.6; }
+  p { margin: 0; font-size: 12px; }
+}
+
+.ide-rail-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ide-rail-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  color: var(--content-primary-dark);
+  cursor: default;
+  a {
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .material-symbols-outlined { font-size: 16px; color: var(--content-secondary-dark); }
+  &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+  &.active { background: rgba(9, 136, 66, 0.2); }
+}
+
+.ide-rail-panel-search-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-divider-dark);
+  background: var(--bg-dark-primary);
+  color: var(--content-primary-dark);
+  font-size: 12px;
+  &:focus { outline: none; border-color: var(--green-50); }
+}
+
+.ide-rail-outline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ide-rail-outline-item {
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--content-primary-dark);
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+}
+
+.ide-rail-panel-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.ide-rail-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--content-primary-dark);
+  padding: 4px 2px;
+
+  select, input[type="checkbox"] {
+    accent-color: var(--green-50);
+  }
+  select {
+    background: var(--bg-dark-primary);
+    color: var(--content-primary-dark);
+    border: 1px solid var(--border-divider-dark);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+  }
+}
+
+// =============================================================================
+// PDF toolbar — Bootstrap's .btn defaults (padding, line-height, bg) need
+// taming inside .pdf-toolbar-btn so it matches Overleaf's compact 24px chrome
+// =============================================================================
+
+.toolbar.toolbar-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+}
+
+.btn.pdf-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 1;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--content-primary-dark);
+  text-decoration: none;
+
+  &:hover:not(:disabled) {
+    background: var(--pdf-toolbar-btn-hover-color);
+    color: var(--content-primary-dark);
+  }
+  &:focus, &:focus-visible { outline: none; box-shadow: none; }
+  &:disabled { opacity: 0.4; }
+
+  .material-symbols-outlined { font-size: 16px; }
+  .button-content { line-height: 1; }
+}
+
+.btn.pdf-toolbar-btn.log-btn.has-errors {
+  color: var(--content-danger-dark);
+}
+
+// Compile button — green pill, 24px tall, fully rounded
+.btn-group.compile-button-group {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  background: var(--green-50);
+  border-radius: 12px;
+  margin-left: 4px;
+  position: relative;
+}
+
+.btn.btn-primary.compile-button-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 22px;
+  padding: 0;
+  background: var(--green-50);
+  color: #fff;
+  border: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 0 12px 12px 0;
+  line-height: 1;
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled),
+  &:active:not(:disabled) {
+    background: var(--green-60);
+    color: #fff;
+    box-shadow: none;
+    outline: none;
+  }
+  .material-symbols-outlined { font-size: 16px; }
+}
+
+.btn-group.compile-button-group .btn.btn-primary.compile-button {
+  border-radius: 12px 0 0 12px;
+}
+
+.compile-button-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 240px;
+  background: var(--bg-dark-secondary, #2f3a4c);
+  border: 1px solid var(--border-divider-dark);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.compile-button-menu-section {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--content-secondary-dark);
+  opacity: 0.75;
+}
+
+.compile-button-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--content-primary-dark);
+  font-size: 13px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 400;
+
+  &:hover:not(:disabled) { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+  &:disabled { opacity: 0.45; cursor: default; }
+  .material-symbols-outlined { font-size: 16px; }
+  span { flex: 1; }
+}
+
+.btn.btn-primary.compile-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--green-50);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  &:hover:not(:disabled),
+  &:active:not(:disabled),
+  &:focus:not(:disabled) {
+    background: var(--green-60);
+    color: #fff;
+    box-shadow: none;
+    outline: none;
+  }
+  &:disabled { background: var(--green-50); color: #fff; opacity: 0.7; }
+
+  .material-symbols-outlined { font-size: 14px; }
+  .button-content { line-height: 1; }
+}
+
+.compile-spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: compile-spin 0.8s linear infinite;
+}
+@keyframes compile-spin { to { transform: rotate(360deg); } }
+
+// Page input + zoom label — small inputs that match Overleaf's pdf footer
+.pdfjs-page-number-input {
+  width: 36px;
+  height: 24px;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid var(--border-divider-dark);
+  border-radius: 4px;
+  background: #1f2733;
+  color: var(--content-primary-dark);
+  font-family: inherit;
+
+  &:focus { outline: none; border-color: var(--green-50); }
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+}
+
+.pdfjs-page-count {
+  font-size: 12px;
+  color: var(--content-secondary-dark);
+  margin: 0 4px 0 2px;
+  opacity: 0.7;
+}
+
+.pdfjs-zoom-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.pdfjs-zoom-label {
+  min-width: 72px;
+  height: 24px;
+  padding: 0 4px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--content-primary-dark);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  &:hover { background: var(--pdf-toolbar-btn-hover-color); }
+}
+
+.pdfjs-zoom-caret { font-size: 16px; line-height: 1; }
+
+.pdfjs-zoom-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: var(--bg-dark-secondary, #2f3a4c);
+  border: 1px solid var(--border-divider-dark);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdfjs-zoom-dropdown-item {
+  display: flex;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--content-primary-dark);
+  font-size: 13px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+}
+
+.pdf-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-divider-dark);
+  margin: 0 4px;
+}
+
+// Bootstrap badge override — sit slightly above the baseline
+.btn .badge {
+  margin-left: 4px;
+  font-size: 10px;
+  padding: 2px 5px;
+}
+
+// =============================================================================
+// Material Symbols — Overleaf uses the variable "Material Symbols" font via
+// `.material-symbols`. The Google Font we load is "Material Symbols Outlined"
+// so we alias both class names to the same font here.
+// =============================================================================
+
+.material-symbols,
+.material-symbols-rounded {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+}
+
+// =============================================================================
+// CodeMirror — dark theme that fits the Overleaf palette
+// =============================================================================
+
+.ide-codeeditor {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  background: var(--bg-dark-primary);
+
+  .cm-editor {
+    height: 100%;
+    outline: none;
+    background: var(--bg-dark-primary);
+    color: var(--content-primary-dark);
+
+    &.cm-focused { outline: none; }
+  }
+  .cm-scroller { font-family: "Source Code Pro", "Menlo", "Consolas", monospace; }
+  .cm-content { padding: 12px 0; caret-color: var(--content-primary-dark); }
+  .cm-gutters {
+    background: var(--bg-dark-primary);
+    border-right: 1px solid var(--border-divider-dark);
+    color: var(--content-secondary-dark);
+    opacity: 0.5;
+  }
+  .cm-activeLine { background: rgba(255, 255, 255, 0.03); }
+  .cm-activeLineGutter {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--content-primary-dark);
+  }
+  .cm-cursor { border-left-color: var(--content-primary-dark); }
+  .cm-selectionBackground,
+  .cm-focused .cm-selectionBackground {
+    background: rgba(9, 136, 66, 0.28) !important;
+  }
+}
+
+// =============================================================================
+// Split divider
+// =============================================================================
+
+.split-divider {
+  position: relative;
+  width: 6px;
+  cursor: col-resize;
+  background: var(--bg-dark-primary);
+  border-left: 1px solid var(--border-divider-dark);
+  border-right: 1px solid var(--border-divider-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-shrink: 0;
+  touch-action: none;
+
+  &:hover, &.dragging { background: var(--bg-dark-secondary); }
+}
+.split-divider-line {
+  display: block;
+  width: 2px;
+  height: 24px;
+  background: var(--neutral-60);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+.split-divider:hover .split-divider-line,
+.split-divider.dragging .split-divider-line {
+  opacity: 1;
+  background: var(--neutral-50);
+}
+
+// =============================================================================
+// Cloned Overleaf PDF viewer — we host the vendored `<PdfJsViewer>` inside
+// our flex-column `.ide-redesign-pdf-container` (toolbar on top, viewer
+// fills the rest). The vendored pdf.scss positions `.pdf-viewer` absolutely
+// with `top: var(--toolbar-small-height)`; we override to a normal flex
+// child and let the cloned viewer position its canvases absolutely inside.
+// =============================================================================
+
+.ide-redesign-pdf-container > .pdf-viewer {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  top: 0;
+  background: var(--bg-dark-secondary);
+  overflow: hidden;
+
+  .pdfjs-viewer.pdfjs-viewer-outer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pdf-viewer-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--content-secondary-dark);
+    font-size: 13px;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+}
+
+// =============================================================================
+// PDF.js canvas stack
+// =============================================================================
+
+// pdf.js's PDFViewer requires its container to be absolutely positioned, so
+// we wrap it in a relative-positioned flex item and pin the canvas container
+// to fill that wrapper.
+.pdf-viewer-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-dark-secondary);
+  overflow: hidden;
+}
+
+.pdf-viewer-canvases {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-dark-secondary);
+  overflow: auto;
+
+  &::-webkit-scrollbar { width: 12px; height: 12px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: #4a5364;
+    border: 3px solid var(--bg-dark-secondary);
+    border-radius: 8px;
+  }
+  &::-webkit-scrollbar-thumb:hover { background: #5a6478; }
+}
+
+.pdf-viewer-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  min-height: 100%;
+}
+
+.pdf-viewer-page {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.32);
+  border-radius: 1px;
+  overflow: hidden;
+  display: block;
+
+  canvas { display: block; }
+}
+
+.pdf-viewer-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--content-secondary-dark);
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+// =============================================================================
+// Logs pane content shell
+// =============================================================================
+
+.new-logs-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark-secondary);
+  overflow: auto;
+  padding: 4px;
+  gap: 4px;
+
+  .logs-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--content-secondary-dark);
+    opacity: 0.7;
+  }
+  .logs-empty--success { color: #6cd58d; opacity: 0.85; }
+
+  .log-entry {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: var(--bg-dark-primary);
+    border-radius: 4px;
+    border-left: 3px solid var(--content-danger-dark);
+
+    pre {
+      margin: 0;
+      flex: 1;
+      font-family: "Source Code Pro", "Menlo", "Consolas", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #fbd5d2;
+    }
+  }
+  .log-section-header {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--content-secondary-dark);
+    margin: 6px 8px 4px;
+    font-weight: 600;
+    opacity: 0.7;
+    &.is-error { color: var(--content-danger-dark); opacity: 1; }
+  }
+  .log-raw {
+    margin: 6px 4px 0;
+    padding: 8px;
+    background: var(--bg-dark-primary);
+    border-radius: 4px;
+    font-family: "Source Code Pro", "Menlo", "Consolas", monospace;
+    font-size: 11.5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--content-secondary-dark);
+  }
+  .log-section {
+    margin: 4px 4px;
+    background: var(--bg-dark-primary);
+    border-radius: 4px;
+    overflow: hidden;
+
+    > summary {
+      cursor: pointer;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--content-primary-dark);
+      list-style: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &::-webkit-details-marker { display: none; }
+      &::before {
+        content: '▸';
+        font-size: 10px;
+        color: var(--content-secondary-dark);
+        transition: transform 0.1s ease;
+      }
+      &:hover { background: rgba(255,255,255,0.04); }
+    }
+    &[open] > summary::before { transform: rotate(90deg); }
+    .log-raw { margin: 0; border-radius: 0; }
+  }
+}
