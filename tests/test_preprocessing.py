@@ -57,6 +57,20 @@ def test_validate_nan_coords():
     assert validate_raw_sample("a", [[[float("nan"), 0], [1, 1]]]) is not None
 
 
+def test_validate_rejects_out_of_canvas():
+    canvas = {"width": 320, "height": 160, "baseline_y": 112, "xheight_y": 64}
+    # x=5000 is way past width=320 even with 5% tolerance
+    err = validate_raw_sample("a", [[[10, 10], [5000, 10]]], canvas)
+    assert err is not None
+    assert "outside canvas" in err
+
+
+def test_validate_allows_small_overshoot():
+    canvas = {"width": 320, "height": 160, "baseline_y": 112, "xheight_y": 64}
+    # 322 is just past the edge — within 5% tolerance
+    assert validate_raw_sample("a", [[[10, 10], [322, 10]]], canvas) is None
+
+
 # --- Normalization tests ---
 
 def test_normalize_basic():
@@ -65,7 +79,27 @@ def test_normalize_basic():
     assert sample.width > 0
     assert sample.height > 0
     assert sample.source_id == "test"
-    assert not sample.is_synthetic
+    assert sample.has_pressure is False  # 2D points only
+
+
+def test_normalize_detects_pressure():
+    strokes_with_p = [[[10, 10, 0.4], [50, 10, 0.8], [50, 50, 0.5]]]
+    sample = normalize_sample("a", strokes_with_p, source_id="p")
+    assert sample.has_pressure is True
+    assert all(len(pt) == 3 for stroke in sample.strokes for pt in stroke)
+
+
+def test_normalize_uses_provided_canvas():
+    # Same strokes, two canvas geometries: tall canvas should produce taller normalized height
+    strokes = [[[10, 20], [10, 100]]]
+    short = normalize_sample(
+        "a", strokes, canvas={"width": 320, "height": 160, "baseline_y": 112, "xheight_y": 64}
+    )
+    tall = normalize_sample(
+        "a", strokes, canvas={"width": 320, "height": 320, "baseline_y": 224, "xheight_y": 128}
+    )
+    # x-height zone differs (48 vs 96 px), so the same 80-px stroke renders to a different height
+    assert short.height != tall.height
 
 
 def test_normalize_serialization_roundtrip():
@@ -75,6 +109,7 @@ def test_normalize_serialization_roundtrip():
     assert restored.char == sample.char
     assert len(restored.strokes) == len(sample.strokes)
     assert restored.source_id == sample.source_id
+    assert restored.has_pressure == sample.has_pressure
 
 
 # --- I/O tests ---

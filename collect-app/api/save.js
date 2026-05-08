@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { char, sample_idx, strokes, tag } = req.body;
+    const { char, sample_idx, strokes, tag, canvas } = req.body;
 
     if (!char || strokes === undefined) {
       return res.status(400).json({ error: 'Missing char or strokes' });
@@ -39,6 +39,7 @@ export default async function handler(req, res) {
       strokes,
       source_id: sourceId,
       tag: tag || null,
+      canvas: canvas || null,
       timestamp: Date.now(),
     };
 

@@ -25,7 +25,9 @@ Endpoints:
 
 import argparse
 import base64
+import contextlib
 import importlib.util
+import io
 import json
 import mimetypes
 import os
@@ -35,14 +37,30 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
+import traceback
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+# Build-pipeline modules — invoked in-process so we don't pay the cost of
+# launching a fresh Python interpreter (and re-importing fontTools) on every
+# Compile click.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from scripts import build_font as build_font_mod  # noqa: E402
+from scripts import preprocess as preprocess_mod  # noqa: E402
+from scripts import pull_samples as pull_samples_mod  # noqa: E402
+from renderer.glyph_model import SampleLibrary  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FONT_OUT = REPO_ROOT / "outputs" / "HandwritingFont.otf"
+FONT_MANIFEST = FONT_OUT.with_suffix(".manifest.json")
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 RAW_SAMPLES_FILE = REPO_ROOT / "data" / "raw_samples" / "collected_samples.json"
+
+# Serializes /compile across threads — the build pipeline reads and writes
+# shared paths under data/, and concurrent compiles would interleave them.
+BUILD_LOCK = threading.Lock()
 
 # Forward slashes so LaTeX doesn't interpret Windows backslashes as escapes.
 _FONT_DIR = REPO_ROOT.joinpath("outputs").as_posix()
@@ -148,32 +166,107 @@ def resolve_lualatex():
 
 LUALATEX = resolve_lualatex()
 
-BUILD_STEPS = [
-    [PY, "scripts/pull_samples.py"],
-    [PY, "scripts/preprocess.py", "data/raw_samples/", "data/processed/"],
-    [PY, "scripts/build_variants.py", "data/processed/", "data/variant_library/"],
-    [PY, "scripts/build_font.py", "data/variant_library/", "outputs/HandwritingFont.otf"],
-]
+# lualatex on heavy math docs needs some headroom but should never legitimately
+# exceed 90s for the kinds of documents this server runs.
+LUALATEX_TIMEOUT_S = 90
+
+RAW_SAMPLES_DIR = REPO_ROOT / "data" / "raw_samples"
+PROCESSED_DIR = REPO_ROOT / "data" / "processed"
+DEFAULT_COLLECT_URL = pull_samples_mod.DEFAULT_URL
 
 
-def run_capture(cmd, cwd):
-    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **_SUBPROCESS_KW)
-    return proc.returncode, proc.stdout, proc.stderr
+def run_capture(cmd, cwd, timeout):
+    """Subprocess wrapper used only for lualatex now — build steps run in-process."""
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            **_SUBPROCESS_KW,
+        )
+        return proc.returncode, proc.stdout, proc.stderr
+    except subprocess.TimeoutExpired as e:
+        return (
+            124,
+            e.stdout.decode("utf-8", errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or ""),
+            f"[timeout after {timeout}s] {' '.join(cmd)}\n"
+            + (e.stderr.decode("utf-8", errors="replace") if isinstance(e.stderr, bytes) else (e.stderr or "")),
+        )
+
+
+@contextlib.contextmanager
+def _capture_step(logs: list, label: str):
+    """Run a build step, prefix its captured stdout/stderr with `[label] `,
+    log how long it took, and re-raise on failure with a logged traceback.
+    """
+    buf = io.StringIO()
+    t0 = time.monotonic()
+    logs.append(f"$ in-process: {label}")
+    try:
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            yield
+    except Exception:
+        logs.append(buf.getvalue().rstrip())
+        logs.append(traceback.format_exc().rstrip())
+        raise
+    out = buf.getvalue().rstrip()
+    if out:
+        logs.append(out)
+    logs.append(f"[done] {label} in {time.monotonic() - t0:.2f}s")
+
+
+def _read_existing_manifest() -> dict | None:
+    if not FONT_MANIFEST.exists():
+        return None
+    try:
+        return json.loads(FONT_MANIFEST.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def build_font(logs, skip_pull=False):
-    steps = BUILD_STEPS[1:] if skip_pull else BUILD_STEPS
-    for cmd in steps:
-        logs.append(f"$ {' '.join(cmd)}")
-        code, out, err = run_capture(cmd, REPO_ROOT)
-        if out:
-            logs.append(out)
-        if err:
-            logs.append(err)
-        if code != 0:
-            logs.append(f"[exit {code}] build step failed")
-            return False
-    return True
+    """Run pull → preprocess → (cached) build_font in this process.
+
+    Returns True on success, False on a build step failure (already logged).
+    Skips build_font when the SHA-256 of the processed/ contents matches the
+    existing manifest's samples_hash and the .otf is present.
+    """
+    try:
+        if not skip_pull:
+            with _capture_step(logs, "pull_samples"):
+                pull_samples_mod.pull_samples(DEFAULT_COLLECT_URL, RAW_SAMPLES_DIR)
+        else:
+            logs.append("[skip pull] reusing existing data/raw_samples/")
+
+        with _capture_step(logs, "preprocess"):
+            processed, rejected = preprocess_mod.preprocess_all(RAW_SAMPLES_DIR, PROCESSED_DIR)
+            print(f"preprocess: {processed} processed, {rejected} rejected")
+
+        new_hash = build_font_mod._hash_processed_dir(PROCESSED_DIR)
+        existing = _read_existing_manifest()
+        if (
+            existing
+            and existing.get("samples_hash") == new_hash
+            and FONT_OUT.exists()
+        ):
+            logs.append(
+                f"[cache hit] processed-dir hash matches manifest "
+                f"({new_hash[:12]}…); skipping build_font."
+            )
+            return True
+
+        with _capture_step(logs, "build_font"):
+            library = SampleLibrary.load(PROCESSED_DIR)
+            print(f"loaded: {library.count()} samples across {len(library.chars())} chars")
+            glyphs = build_font_mod.build_font(library, FONT_OUT)
+            manifest_path = build_font_mod.write_manifest(FONT_OUT, PROCESSED_DIR, library, glyphs)
+            print(f"manifest: {manifest_path}")
+        return True
+    except Exception as e:
+        logs.append(f"[build error] {e!r}")
+        return False
 
 
 def _section(logs: list, title: str, body: str) -> None:
@@ -237,6 +330,20 @@ def compile_latex(latex_source, rebuild, skip_pull, logs):
         font_info.append(f"outputs/ contents: {outputs_listing}")
     except OSError as e:
         font_info.append(f"outputs/ listing failed: {e}")
+    if FONT_MANIFEST.exists():
+        try:
+            mf = json.loads(FONT_MANIFEST.read_text(encoding="utf-8"))
+            font_info.append(
+                f"manifest: built_at={mf.get('built_at')} "
+                f"sample_count={mf.get('sample_count')} "
+                f"chars={mf.get('char_count')} "
+                f"pressure={mf.get('pressure_with')}with/{mf.get('pressure_without')}without "
+                f"hash={(mf.get('samples_hash') or '')[:12]}"
+            )
+        except (OSError, ValueError) as e:
+            font_info.append(f"manifest read failed: {e}")
+    else:
+        font_info.append("manifest: (none — font was built before manifests existed, or never built)")
     _section(logs, "font environment", "\n".join(font_info))
 
     # --- Normalize -------------------------------------------------------
@@ -265,11 +372,12 @@ def compile_latex(latex_source, rebuild, skip_pull, logs):
             LUALATEX,
             "-interaction=nonstopmode",
             "-halt-on-error",
+            "-no-shell-escape",
             f"-output-directory={tmp}",
             str(tex_path),
         ]
         _section(logs, "lualatex invocation", "$ " + " ".join(cmd))
-        code, out, err = run_capture(cmd, tmp)
+        code, out, err = run_capture(cmd, tmp, LUALATEX_TIMEOUT_S)
 
         # Pull the critical diagnostics out of the lualatex .log file —
         # that's where fontspec reports which font it actually loaded.
@@ -439,7 +547,8 @@ class Handler(BaseHTTPRequestHandler):
 
         logs = []
         try:
-            pdf = compile_latex(latex, rebuild, skip_pull, logs)
+            with BUILD_LOCK:
+                pdf = compile_latex(latex, rebuild, skip_pull, logs)
         except Exception as e:
             logs.append(f"[exception] {e!r}")
             self._json(500, {"ok": False, "log": "\n".join(logs), "stage": "exception"})

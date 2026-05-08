@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
-"""Build an OpenType font from the variant library.
+"""Build an OpenType font from preprocessed handwriting samples.
 
-Converts handwriting stroke data (with pressure) into font glyph outlines
-and generates a .otf file that can be used directly in LaTeX.
+Converts handwriting stroke data (with pressure when available) into font
+glyph outlines and writes a .otf file usable directly in LaTeX.
 
 Usage:
-    python scripts/build_font.py data/variant_library/ outputs/HandwritingFont.otf
+    python scripts/build_font.py data/processed/ outputs/HandwritingFont.otf
+
+Alongside the .otf, a sidecar `<output>.manifest.json` records what went
+into the build (sample hash, char counts, pressure availability, canvas
+geometries) so stale builds are visible when inputs change later.
 """
 
 import argparse
+import datetime as _dt
+import hashlib
+import json
 import math
 import sys
 from pathlib import Path
@@ -19,7 +26,9 @@ from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.ttLib.tables import otTables
 
-from renderer.glyph_model import CharacterSample, Stroke, VariantLibrary
+from renderer.glyph_model import CharacterSample, SampleLibrary, Stroke
+
+FONT_NAME = "Handwriting"
 
 
 # Font metrics in font units (UPM = units per em)
@@ -62,14 +71,20 @@ def _compute_velocities(stroke: Stroke) -> list[float]:
 def stroke_to_outline_points(
     stroke: Stroke,
     base_width: float,
+    has_pressure: bool,
 ) -> list[tuple[float, float]]:
-    """Convert a stroke with pressure into a closed outline polygon."""
+    """Convert a stroke into a closed outline polygon.
+
+    When `has_pressure` is True, width is modulated by smoothed pressure.
+    When False, width is driven by velocity + endpoint taper only — the
+    constant-pressure plateau (every point at 0.5) that older samples produce
+    would otherwise look indistinguishably flat.
+    """
     if len(stroke) < 2:
         return []
 
     n = len(stroke)
-    raw_pressures = [_get_pressure(pt) for pt in stroke]
-    pressures = _smooth_pressures(raw_pressures)
+    pressures = _smooth_pressures([_get_pressure(pt) for pt in stroke]) if has_pressure else None
     velocities = _compute_velocities(stroke)
 
     min_w = base_width * 0.3
@@ -82,8 +97,12 @@ def stroke_to_outline_points(
     for i in range(n):
         x, y = stroke[i][0], stroke[i][1]
 
-        p = pressures[i]
-        width = min_w + (max_w - min_w) * (p ** 0.8)
+        if has_pressure:
+            width = min_w + (max_w - min_w) * (pressures[i] ** 0.8)
+        else:
+            # Without pressure, sit at the upper-middle of the range and let
+            # velocity + taper do all the variation.
+            width = min_w + (max_w - min_w) * 0.7
 
         vel_factor = 1.0 - velocities[i] * 0.3
         width *= vel_factor
@@ -129,43 +148,32 @@ def sample_to_glyph_outlines(
             (pt[0] * font_scale, pt[1] * font_scale) + tuple(pt[2:])
             for pt in stroke
         ]
-        outline = stroke_to_outline_points(scaled, STROKE_BASE_WIDTH)
+        outline = stroke_to_outline_points(scaled, STROKE_BASE_WIDTH, sample.has_pressure)
         if len(outline) >= 3:
             contours.append(outline)
     return contours
 
 
 def build_font(
-    library: VariantLibrary,
+    library: SampleLibrary,
     output_path: Path,
-    font_name: str = "Handwriting",
 ) -> None:
-    """Build an OpenType font from the variant library."""
+    """Build an OpenType font from the sample library."""
 
-    # Pick one variant per character (first real sample)
-    # glyphs: keyed by char for text glyphs
-    glyphs: dict[str, CharacterSample] = {}
-    for char in library.chars():
-        variants = library.get_variants(char)
-        if variants:
-            real = [v for v in variants if not v.is_synthetic]
-            glyphs[char] = real[0] if real else variants[0]
+    # One sample per (tag, char). When multiple samples exist for a key we
+    # take the first — picking among variants would be the natural place to
+    # add OpenType contextual alternates later.
+    def _pick(tag: str | None) -> dict[str, CharacterSample]:
+        out: dict[str, CharacterSample] = {}
+        for char in library.chars(tag=tag):
+            variants = library.get(char, tag=tag)
+            if variants:
+                out[char] = variants[0]
+        return out
 
-    # mathvar-tagged glyphs: separate samples for math variable style
-    mathvar_glyphs: dict[str, CharacterSample] = {}
-    for char in library.tagged_chars("mathvar"):
-        variants = library.get_variants(char, tag="mathvar")
-        if variants:
-            real = [v for v in variants if not v.is_synthetic]
-            mathvar_glyphs[char] = real[0] if real else variants[0]
-
-    # mathdelim-tagged glyphs: separate samples for stretchy delimiters
-    mathdelim_glyphs: dict[str, CharacterSample] = {}
-    for char in library.tagged_chars("mathdelim"):
-        variants = library.get_variants(char, tag="mathdelim")
-        if variants:
-            real = [v for v in variants if not v.is_synthetic]
-            mathdelim_glyphs[char] = real[0] if real else variants[0]
+    glyphs = _pick(None)
+    mathvar_glyphs = _pick("mathvar")
+    mathdelim_glyphs = _pick("mathdelim")
 
     print(f"Building font with {len(glyphs)} text glyphs, {len(mathvar_glyphs)} math variable glyphs, {len(mathdelim_glyphs)} math delimiter glyphs...")
 
@@ -437,8 +445,8 @@ def build_font(
     fb.setupCharacterMap(cmap)
 
     fb.setupCFF(
-        psName=font_name.replace(" ", ""),
-        fontInfo={"FullName": font_name},
+        psName=FONT_NAME,
+        fontInfo={"FullName": FONT_NAME},
         charStringsDict=charstrings,
         privateDict={},
     )
@@ -453,7 +461,7 @@ def build_font(
     )
 
     fb.setupNameTable({
-        "familyName": font_name,
+        "familyName": FONT_NAME,
         "styleName": "Regular",
     })
 
@@ -475,6 +483,11 @@ def build_font(
     fb.font.save(str(output_path))
     print(f"Font saved to {output_path}")
     print(f"  {len(glyphs)} character glyphs + space + .notdef")
+    return {
+        "text_glyphs": sorted(glyphs.keys()),
+        "mathvar_glyphs": sorted(mathvar_glyphs.keys()),
+        "mathdelim_glyphs": sorted(mathdelim_glyphs.keys()),
+    }
 
 
 def _make_math_value(value: int) -> otTables.MathValueRecord:
@@ -712,18 +725,69 @@ def _add_math_script_tables(font, glyph_names: list[str]) -> None:
     font["GPOS"] = wrapper2
 
 
+def _hash_processed_dir(processed_dir: Path) -> str:
+    """SHA-256 over the contents of every processed sample file, in sorted order.
+
+    Stable across runs as long as the inputs are the same — used as the cache
+    key in the build manifest.
+    """
+    h = hashlib.sha256()
+    for f in sorted(processed_dir.glob("*.json")):
+        h.update(f.name.encode("utf-8"))
+        h.update(b"\0")
+        h.update(f.read_bytes())
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+def _summarize_inputs(library: SampleLibrary) -> dict:
+    pressure_with = pressure_without = 0
+    for samples in library.samples.values():
+        for s in samples:
+            if s.has_pressure:
+                pressure_with += 1
+            else:
+                pressure_without += 1
+    return {
+        "sample_count": library.count(),
+        "char_count": len(library.chars()),
+        "tagged_keys": len(library.samples),
+        "pressure_with": pressure_with,
+        "pressure_without": pressure_without,
+    }
+
+
+def write_manifest(
+    output_path: Path,
+    processed_dir: Path,
+    library: SampleLibrary,
+    glyphs: dict,
+) -> Path:
+    manifest = {
+        "built_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "font_name": FONT_NAME,
+        "samples_hash": _hash_processed_dir(processed_dir),
+        **_summarize_inputs(library),
+        **glyphs,
+    }
+    manifest_path = output_path.with_suffix(".manifest.json")
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    return manifest_path
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Build OpenType font from variant library")
-    parser.add_argument("input", type=Path, help="Variant library directory")
+    parser = argparse.ArgumentParser(description="Build OpenType font from processed samples")
+    parser.add_argument("input", type=Path, help="Processed samples directory (output of preprocess.py)")
     parser.add_argument("output", type=Path, help="Output .otf file path")
-    parser.add_argument("--name", default="Handwriting", help="Font family name")
     args = parser.parse_args()
 
-    print(f"Loading variant library from {args.input}...")
-    library = VariantLibrary.load(args.input)
-    print(f"  {library.count()} variants across {len(library.chars())} characters")
+    print(f"Loading samples from {args.input}...")
+    library = SampleLibrary.load(args.input)
+    print(f"  {library.count()} samples across {len(library.chars())} characters")
 
-    build_font(library, args.output, args.name)
+    glyphs = build_font(library, args.output)
+    manifest_path = write_manifest(args.output, args.input, library, glyphs)
+    print(f"Manifest: {manifest_path}")
 
 
 if __name__ == "__main__":

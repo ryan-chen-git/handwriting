@@ -67,7 +67,7 @@ def main():
     if total > 0:
         print(f"\nDone. Run the pipeline:")
         print(f"  python scripts/preprocess.py {args.output} data/processed/")
-        print(f"  python scripts/build_variants.py data/processed/ data/variant_library/")
+        print(f"  python scripts/build_font.py data/processed/ outputs/HandwritingFont.otf")
 
 
 if __name__ == "__main__":

@@ -37,6 +37,7 @@ export default async function handler(req, res) {
           source_id: data.source_id,
         };
         if (data.tag) entry.tag = data.tag;
+        if (data.canvas) entry.canvas = data.canvas;
         samples.push(entry);
       } catch (e) {
         console.error(`Failed to fetch ${blob.pathname}:`, e);
