@@ -2,9 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { ToolbarMenuBar } from './menu-bar'
 import { ToolbarProjectTitle } from './project-title'
 import { OnlineUsers } from './online-users'
-import ShareProjectButton from './share-project-button'
 import ChangeLayoutButton from './change-layout-button'
-import ShowHistoryButton from './show-history-button'
 import { useLayoutContext } from '@/shared/context/layout-context'
 import BackToEditorButton from '@/features/editor-navigation-toolbar/components/back-to-editor-button'
 import { useCallback } from 'react'
@@ -21,7 +19,7 @@ const SubmitProjectButton = publishModalModules?.import.NewPublishToolbarButton
 
 export const Toolbar = () => {
   const { view, restoreView } = useLayoutContext()
-  const { cobranding, isRestrictedTokenMember } = useEditorContext()
+  const { cobranding } = useEditorContext()
   const { permissionsLevel } = useIdeReactContext()
   const { t } = useTranslation()
   const shouldDisplaySubmitButton =
@@ -54,12 +52,10 @@ export const Toolbar = () => {
       <ToolbarProjectTitle />
       <div className="ide-redesign-toolbar-actions">
         <OnlineUsers />
-        {!isRestrictedTokenMember && <ShowHistoryButton />}
         <ChangeLayoutButton />
         {shouldDisplaySubmitButton && cobranding && (
           <SubmitProjectButton cobranding={cobranding} />
         )}
-        <ShareProjectButton />
         {getMeta('ol-showUpgradePrompt') && <UpgradeButton />}
       </div>
     </nav>

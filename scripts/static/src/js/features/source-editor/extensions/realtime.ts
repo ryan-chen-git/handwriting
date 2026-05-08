@@ -60,6 +60,15 @@ export const realtime = (
   { currentDoc }: { currentDoc: DocumentContainer },
   handleError: (error: Error) => void
 ) => {
+  // Offline build: no ShareJS/socket round-trip. Skip the entire realtime
+  // pipeline — the ViewPlugin would otherwise throw in handleUpdateFromCM
+  // (no otAdapter) on every doc change, and ensureRealtimePlugin would spam
+  // "extension destroyed" warnings + emit an "out of sync" error event.
+  // `window.io === null` is the offline marker set in main.tsx.
+  if ((window as unknown as { io: unknown }).io === null) {
+    return []
+  }
+
   const realtimePlugin = ViewPlugin.define(view => {
     const editor = new EditorFacade(view)
 
@@ -72,10 +81,7 @@ export const realtime = (
         }
       },
       destroy() {
-        // TODO: wrap in a timeout so processing can finish?
-        // window.setTimeout(() => {
         currentDoc.detachFromCM6()
-        // }, 0)
       },
     }
   })

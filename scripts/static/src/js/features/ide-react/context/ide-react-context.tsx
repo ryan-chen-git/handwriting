@@ -53,19 +53,17 @@ export const IdeReactProvider: FC<React.PropsWithChildren> = ({ children }) => {
   )
   const [unstableStore] = useState(() => {
     const store = new ReactScopeValueStore()
-    // Add dummy editor.ready key for Writefull, that relies on this calling
-    // back once after watching it
+    // Initialize editor.ready key — upstream integrations watch it and
+    // expect a one-shot callback when the editor mounts.
     store.set('editor.ready', undefined)
     return store
   })
   const [startedFreeTrial, setStartedFreeTrial] = useState(false)
   const release = getMeta('ol-ExposedSettings')?.sentryRelease ?? null
 
-  // Set to true only after project:joined has fired and all its listeners have
-  // been called.
-  // Offline build: the real-time service that fires `joinProjectResponse` is
-  // stubbed, so the listener at line ~125 never runs; start true so the
-  // loading screen unblocks.
+  // Offline build: we synthesize the `joinProjectResponse` from the project
+  // meta tag in the effect below, so this can start true to unblock the
+  // loading screen immediately.
   const [projectJoined, setProjectJoined] = useState(true)
 
   const { socket, getSocketDebuggingInfo } = useConnectionContext()

@@ -37,10 +37,8 @@ function PdfCompileButton() {
     animateCompileDropdownArrow,
     autoCompile,
     compiling,
-    draft,
     hasChanges,
     setAutoCompile,
-    setDraft,
     setStopOnValidationError,
     stopOnFirstError,
     stopOnValidationError,
@@ -142,26 +140,6 @@ function PdfCompileButton() {
             trailingIcon={!autoCompile ? 'check' : null}
           >
             {t('off')}
-          </DropdownItem>
-        </li>
-        <DropdownDivider />
-        <DropdownHeader>{t('compile_mode')}</DropdownHeader>
-        <li role="none">
-          <DropdownItem
-            as="button"
-            onClick={() => sendEventAndSet(false, setDraft, 'compile-mode')}
-            trailingIcon={!draft ? 'check' : null}
-          >
-            {t('normal')}
-          </DropdownItem>
-        </li>
-        <li role="none">
-          <DropdownItem
-            as="button"
-            onClick={() => sendEventAndSet(true, setDraft, 'compile-mode')}
-            trailingIcon={draft ? 'check' : null}
-          >
-            {t('fast')}&nbsp;<span className="subdued">[draft]</span>
           </DropdownItem>
         </li>
         <DropdownDivider />

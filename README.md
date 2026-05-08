@@ -77,25 +77,37 @@ The server runs a preflight at startup; if `fontTools` or `lualatex` is
 missing, the *browser* shows a clear page telling you what to install — no
 console required.
 
-## The Test Compile page
+## The Test Compile UI
 
-- **Presets** — one-click fills for common test inputs (alphabet, math,
-  matrices, fractions, Greek).
-- **LaTeX editor** — paste or type a complete `.tex` document. Any of your
-  own font-selection lines (`fontspec`, `unicode-math`, `\setmainfont`,
-  `\setmathfont`, …) are stripped and replaced server-side with the
-  handwriting fontspec, so the handwriting font always wins.
-- **Collected chars panel** — lists what's been pulled locally; highlights any
-  letters/digits in your input that you haven't drawn yet.
-- **Rebuild font** (on by default) — before compiling, re-run the pipeline:
-  pull samples → preprocess → build font. Uncheck for fast iteration on
-  pure LaTeX changes against the existing `outputs/HandwritingFont.otf`.
-- **Skip pull** — when rebuilding, reuse the last-pulled samples instead of
-  hitting the collect-app again. Useful when drawing is paused.
-- **Compile** — writes the normalized `.tex` to a temp dir, runs `lualatex`,
-  and streams the resulting PDF into the iframe on the right with the full
-  log below. Builds are cached by SHA-256 of the inputs, so re-Compiling
-  with no new samples skips the font build entirely.
+The local web UI is a fork of upstream Overleaf's frontend, lifted verbatim
+and stubbed for offline single-user use (no auth, no real-time collab, no
+cloud). It runs on `localhost:8787` and behaves like a normal Overleaf
+project, with two custom additions:
+
+- **Samples rail tab** (the brush icon, left rail) — manages the handwriting
+  data. The header has a refresh icon that triggers
+  `POST /pull-samples` (pull → preprocess → build font); the body lists
+  every renderable character grouped by category (Lowercase, Uppercase,
+  Digits, Punctuation, Brackets, Operators, Other). Each row shows the
+  character, its descriptive name (e.g. *lowercase a*), and how many samples
+  you've collected. Red rows = no samples yet (the font will fall back to
+  a default glyph there). Click a row to inspect the actual collected
+  strokes for that character in the **Samples Viewer** panel below.
+- **Documentation modal** (Help → Documentation) — explains the pipeline,
+  the cache, and the offline-build deviations.
+
+Otherwise it's the regular Overleaf experience: file tree, multi-file
+project, LaTeX editor with syntax highlight + lint + autocomplete + symbol
+palette, PDF preview with synctex, settings modal, etc. Compile runs
+`lualatex` against your source plus the built handwriting font; user-set
+font lines (`\setmainfont`, `\setmathfont`, `unicode-math`, …) are stripped
+and replaced with the handwriting fontspec server-side, so the font always
+wins.
+
+**Pull and compile are separate steps.** The Recompile button only runs
+`lualatex` against the current `HandwritingFont.otf`. To pick up new
+samples you've collected, open the *Samples* rail tab and hit the refresh
+icon — that's the only path that hits the collect-app.
 
 ## Collecting your own samples
 
@@ -154,13 +166,20 @@ Sample documents in `examples/`:
 Server endpoints (if you ever want to script the web UI):
 
 ```
-GET  /                  Test Compile HTML page
-GET  /health            { ok, font_exists, lualatex }
-GET  /chars             { chars, counts, mtime }   — from data/raw_samples
-GET  /default_template  { latex }                  — seed for the editor
-POST /compile           { latex, rebuild, skip_pull }
-                        → { ok, pdf(base64), log, stage }
+GET    /                          IDE HTML entry
+GET    /health                    { ok, font_exists, lualatex }
+GET    /chars                     { chars, counts, mtime }
+GET    /samples?char=X            { char, samples: [{strokes: [[x,y,p?], …]}] }
+GET    /default_template          { latex }
+POST   /pull-samples              { ok, count, processed, rejected, glyph_count,
+                                    cache_hit, chars, counts, mtime, log }
+POST   /compile                   { latex, stop_on_first_error? }
+                                  → { ok, pdf(base64), log, stage }
 ```
+
+Compile artifacts (`.aux`, `.toc`, `.bbl`, …) persist in
+`/tmp/hwcompile-cache/` so cross-references converge faster on repeat
+builds. Delete that directory if you ever suspect stale state.
 
 ## Repo layout
 
@@ -170,11 +189,15 @@ collect-app/           Vercel web app (static UI + /api/* serverless fns)
   api/                 save / export / progress / list-char / delete[-all]
 
 scripts/
-  compile_server.py    Local HTTP server for the Test Compile UI
+  compile_server.py    Local HTTP server (UI + /compile + /pull-samples + …)
   pull_samples.py      Pull samples from the deployed collect-app
   preprocess.py        Normalize raw strokes → CharacterSample JSON
   build_font.py        fontTools: samples → OpenType .otf + manifest sidecar
-  static/              Vite-built UI bundle served by compile_server
+  static/              Vite-driven IDE: forked Overleaf frontend + offline glue
+    src/js/            Vendored Overleaf source (patches marked "Offline build:")
+    src/stubs/         Backend stand-ins for upstream-only packages
+    public/            Static assets (Hunspell dictionaries, images)
+    vite.config.ts     Aliases + middleware that fakes the upstream API
 
 renderer/glyph_model.py      CharacterSample + SampleLibrary dataclasses
 

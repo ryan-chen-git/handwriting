@@ -65,7 +65,10 @@ import type { ScriptLogType } from '../../../modules/admin-panel/frontend/js/fea
 import { Subscription as AdminSubscription } from '../../../types/admin/subscription'
 import { AdminCapability } from '../../../types/admin-capabilities'
 import { AlgoliaConfig } from '../../../modules/algolia-search/frontend/js/types'
-import { WritefullPublicEnv } from '@wf/domain/writefull-public-env'
+// `WritefullPublicEnv` is shipped only in upstream's Server Pro build via
+// the `@wf` workspace package; we don't load Writefull, so define a minimal
+// `unknown`-shaped placeholder for the meta entry below.
+type WritefullPublicEnv = unknown
 import { UserNotificationPreferences } from '../../../types/notifications'
 import { SharingPermissions } from '../../../modules/sharing-permissions/app/src/types'
 import { FullHistoryFailure } from '@ol-types/history/projectHistory'

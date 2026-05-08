@@ -1,0 +1,328 @@
+// Match the file-tree panel background so this rail tab feels native.
+// `--file-tree-bg` is defined in stylesheets/pages/editor/file-tree.scss.
+.samples-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--file-tree-bg);
+  color: var(--symbol-palette-color);
+}
+
+.samples-panel-group {
+  height: 100%;
+}
+
+// Each Panel from react-resizable-panels gets a computed height; lay its
+// own children out so the body fills the remaining space below the toolbar.
+.samples-stack-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > .file-tree-toolbar {
+    flex-shrink: 0;
+  }
+}
+
+.samples-panel-statusbar {
+  display: flex;
+  padding: 0 var(--spacing-04, 0.75rem) var(--spacing-02, 0.25rem);
+}
+
+.samples-panel-summary {
+  font-size: var(--font-size-01, 0.75rem);
+  color: var(--symbol-palette-color);
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.samples-panel-log {
+  font-size: var(--font-size-01, 0.75rem);
+  font-family: var(--font-family-monospace, monospace);
+  background: rgb(0 0 0 / 5%);
+  border: 1px solid var(--border-divider, rgb(0 0 0 / 10%));
+  border-radius: var(--border-radius-base, 4px);
+  padding: var(--spacing-02, 0.25rem) var(--spacing-03, 0.5rem);
+  margin: 0;
+  white-space: pre-wrap;
+  max-height: 12em;
+  overflow-y: auto;
+  color: var(--symbol-palette-color);
+}
+
+.samples-panel-error {
+  font-size: var(--font-size-02, 0.875rem);
+  color: var(--bs-danger, #dc3545);
+}
+
+.samples-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-03, 0.5rem);
+}
+
+.samples-panel-section {
+  & + & {
+    margin-top: var(--spacing-04, 0.75rem);
+  }
+}
+
+.samples-panel-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-02, 0.25rem);
+  width: 100%;
+  font-size: var(--font-size-02, 0.875rem);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-02, 0.25rem);
+  padding: var(--spacing-02, 0.25rem) var(--spacing-03, 0.5rem);
+  color: var(--symbol-palette-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  background: none;
+  border: 0;
+  border-radius: var(--border-radius-base, 4px);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--file-tree-item-hover-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blue-50, #4299e1);
+    outline-offset: -2px;
+  }
+}
+
+.samples-panel-section-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.samples-panel-chevron-icon {
+  transition: transform 0.15s ease;
+
+  &.is-expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.samples-panel-section-label {
+  flex-shrink: 0;
+}
+
+.samples-panel-section-count {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-01, 0.75rem);
+  font-weight: 400;
+  opacity: 0.65;
+  text-transform: none;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+// File-tree-style rows: full-width clickable rectangles. Hover background
+// matches the file tree's rows for visual consistency.
+.samples-panel-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.samples-panel-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-03, 0.5rem);
+  width: 100%;
+  padding: var(--spacing-02, 0.25rem) var(--spacing-04, 0.75rem);
+  background: transparent;
+  border: 0;
+  border-radius: var(--border-radius-base, 4px);
+  color: var(--symbol-palette-color);
+  font-size: var(--font-size-02, 0.875rem);
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.6;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--file-tree-item-hover-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blue-50, #4299e1);
+    outline-offset: -2px;
+  }
+
+  &.is-selected {
+    background: var(--file-tree-item-selected-bg, var(--bg-accent-01));
+    color: var(--file-tree-item-selected-color, white);
+    font-weight: bold;
+  }
+
+  &.is-missing .samples-panel-row-char {
+    color: var(--bs-danger, #dc3545);
+  }
+
+  &.is-missing.is-selected .samples-panel-row-char {
+    color: inherit;
+  }
+}
+
+.samples-panel-row-char {
+  flex-shrink: 0;
+  font-family: 'Stix Two Math', serif;
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 1.5em;
+}
+
+// Middle column — matches the file-tree filename text: inherited
+// sans-serif, same size as a file row, no opacity dim. Takes the
+// remaining space and ellipsizes when the rail narrows.
+.samples-panel-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-02, 0.875rem);
+}
+
+// Right column — compact tabular count.
+.samples-panel-row-count {
+  flex-shrink: 0;
+  font-size: var(--font-size-02, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+// =============================================================================
+// Handwriting viewer (bottom panel)
+// =============================================================================
+
+.handwriting-viewer-empty-state,
+.handwriting-viewer-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--spacing-04, 0.75rem);
+  color: var(--symbol-palette-color);
+}
+
+.handwriting-viewer-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-03, 0.5rem);
+
+  p {
+    margin: 0;
+    font-size: var(--font-size-02, 0.875rem);
+    opacity: 0.7;
+    max-width: 22em;
+  }
+}
+
+.handwriting-viewer-empty-title {
+  font-size: var(--font-size-02, 0.875rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.handwriting-viewer-title {
+  font-size: var(--font-size-02, 0.875rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--spacing-03, 0.5rem);
+  opacity: 0.85;
+}
+
+.handwriting-viewer-empty,
+.handwriting-viewer-loading,
+.handwriting-viewer-error {
+  font-size: var(--font-size-02, 0.875rem);
+  padding: var(--spacing-03, 0.5rem);
+  color: var(--symbol-palette-color);
+  opacity: 0.8;
+}
+
+.handwriting-viewer-error {
+  color: var(--bs-danger, #dc3545);
+  opacity: 1;
+}
+
+// Documentation modal — same shell as the settings modal; sectioned body.
+.documentation-modal-body {
+  section + section {
+    margin-top: var(--spacing-05, 1rem);
+  }
+
+  h4 {
+    font-size: var(--font-size-03, 1rem);
+    font-weight: 600;
+    margin: 0 0 var(--spacing-02, 0.25rem);
+  }
+
+  p,
+  ol {
+    margin: 0 0 var(--spacing-02, 0.25rem);
+    line-height: 1.5;
+  }
+
+  ol {
+    padding-left: var(--spacing-06, 1.5rem);
+  }
+
+  li + li {
+    margin-top: var(--spacing-02, 0.25rem);
+  }
+
+  code {
+    font-family: var(--font-family-monospace, monospace);
+    background: rgb(0 0 0 / 6%);
+    padding: 0 var(--spacing-01, 0.125rem);
+    border-radius: 3px;
+  }
+}
+
+.handwriting-viewer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--spacing-02, 0.25rem);
+}
+
+.handwriting-viewer-sample {
+  width: 100%;
+  aspect-ratio: 1;
+  // Theme-aware: secondary themed bg gives a subtle backdrop in both modes.
+  background: var(--bg-secondary-themed, rgb(0 0 0 / 5%));
+  border: 1px solid var(--border-divider-themed, rgb(0 0 0 / 10%));
+  border-radius: var(--border-radius-base, 4px);
+  padding: 4px;
+  color: var(--symbol-palette-color);
+
+  path {
+    fill: none;
+    // currentColor inherits the panel text color → contrasts in any theme.
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}

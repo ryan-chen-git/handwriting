@@ -13,7 +13,6 @@ import { LogEntry as LogEntryData } from '@/features/pdf-preview/util/types'
 import LogEntry from './log-entry'
 import TimeoutUpgradePromptNew from '@/features/pdf-preview/components/timeout-upgrade-prompt-new'
 import getMeta from '@/utils/meta'
-import PdfClearCacheButton from '@/features/pdf-preview/components/pdf-clear-cache-button'
 import PdfDownloadFilesButton from '@/features/pdf-preview/components/pdf-download-files-button'
 import RollingBuildSelectedReminder from './rolling-build-selected-reminder'
 import ErrorAssistantAiPaywallNotification from './error-assistant-ai-paywall-notification'
@@ -134,7 +133,6 @@ function ErrorLogs({
 
           {includeActionButtons && (
             <div className="logs-pane-actions">
-              <PdfClearCacheButton />
               <PdfDownloadFilesButton />
             </div>
           )}

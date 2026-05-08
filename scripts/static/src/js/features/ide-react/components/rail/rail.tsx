@@ -7,12 +7,8 @@ import {
   useRailContext,
 } from '@/features/ide-react/context/rail-context'
 import FileTreeOutlinePanel from '@/features/file-tree/components/file-tree-outline-panel'
-import ChatPane from '@/features/chat/components/chat-pane'
-import ChatIndicator from '@/features/chat/components/chat-indicator'
-import getMeta from '@/utils/meta'
+import SamplesPanel from '@/features/samples/components/samples-panel'
 import classNames from 'classnames'
-import IntegrationsPanel from '@/features/integrations-panel/integrations-panel'
-import { useChatContext } from '@/features/chat/context/chat-context'
 import { useEditorAnalytics } from '@/shared/hooks/use-editor-analytics'
 import {
   FullProjectSearchPanel,
@@ -32,7 +28,6 @@ import RailOverflowDropdown from './rail-overflow-dropdown'
 import useRailOverflow from '@/features/ide-react/hooks/use-rail-overflow'
 import importOverleafModules from '../../../../../macros/import-overleaf-module.macro'
 import { shouldIncludeElement } from '@/features/ide-react/util/rail-utils'
-import { useEditorContext } from '@/shared/context/editor-context'
 import useEventListener from '@/shared/hooks/use-event-listener'
 
 const moduleRailEntries = (
@@ -62,13 +57,7 @@ export const RailLayout = () => {
   const { selectedTab, openTab, isOpen, setIsOpen, togglePane, selectTab } =
     useRailContext()
   const { features } = useProjectContext()
-  const { isRestrictedTokenMember } = useEditorContext()
-  const gitBridgeEnabled = getMeta('ol-gitBridgeEnabled')
-  const { isOverleaf } = getMeta('ol-ExposedSettings')
-
   const { view, setLeftMenuShown } = useLayoutContext()
-
-  const { markMessagesAsRead } = useChatContext()
 
   const isHistoryView = view === 'history'
 
@@ -101,18 +90,17 @@ export const RailLayout = () => {
         mountOnFirstLoad: true,
       },
       {
+        key: 'samples',
+        icon: 'brush',
+        title: 'Samples',
+        component: <SamplesPanel />,
+      },
+      {
         key: 'full-project-search',
         icon: 'search',
         title: t('project_search'),
         component: <FullProjectSearchPanel />,
         hide: !hasFullProjectSearch,
-      },
-      {
-        key: 'integrations',
-        icon: 'integration_instructions',
-        title: t('integrations'),
-        component: <IntegrationsPanel />,
-        hide: !isOverleaf && !gitBridgeEnabled,
       },
       {
         key: 'review-panel',
@@ -122,26 +110,9 @@ export const RailLayout = () => {
         hide: !features.trackChangesVisible,
         disabled: view !== 'editor',
       },
-      {
-        key: 'chat',
-        icon: 'forum',
-        component: <ChatPane />,
-        indicator: <ChatIndicator />,
-        title: t('chat'),
-        hide:
-          !getMeta('ol-capabilities')?.includes('chat') ||
-          isRestrictedTokenMember,
-      },
       ...moduleRailEntries,
     ],
-    [
-      t,
-      features.trackChangesVisible,
-      view,
-      isRestrictedTokenMember,
-      isOverleaf,
-      gitBridgeEnabled,
-    ]
+    [t, features.trackChangesVisible, view]
   )
 
   const railActions: RailAction[] = useMemo(
@@ -207,13 +178,9 @@ export const RailLayout = () => {
             location: 'rail',
           })
         }
-
-        if (key === 'chat') {
-          markMessagesAsRead()
-        }
       }
     },
-    [openTab, togglePane, selectedTab, railTabs, sendEvent, markMessagesAsRead]
+    [openTab, togglePane, selectedTab, railTabs, sendEvent]
   )
 
   useEffect(() => {

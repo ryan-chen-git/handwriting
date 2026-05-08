@@ -7,11 +7,25 @@ import OLButton from '@/shared/components/ol/ol-button'
 import MaterialIcon from '@/shared/components/material-icon'
 import { useEditorAnalytics } from '@/shared/hooks/use-editor-analytics'
 
+// Filesystem-safe filename derived from the project's display name. Strips
+// path separators / control chars and collapses whitespace + repeats into a
+// single underscore. Falls back to "project" if the result is empty.
+function sanitizeFilename(name: string | undefined | null): string {
+  if (!name) return 'project'
+  const cleaned = name
+    .replace(/[<>:"/\\|?*\x00-\x1f]+/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^[._]+|[._]+$/g, '')
+  return cleaned || 'project'
+}
+
 function PdfHybridDownloadButton() {
   const { pdfDownloadUrl } = useCompileContext()
   const { sendEvent } = useEditorAnalytics()
 
-  const { projectId } = useProjectContext()
+  const { projectId, name: projectName } = useProjectContext()
+  const downloadFilename = `${sanitizeFilename(projectName)}.pdf`
 
   const { t } = useTranslation()
   const description = pdfDownloadUrl
@@ -45,7 +59,7 @@ function PdfHybridDownloadButton() {
         draggable={false}
         data-disabled={!pdfDownloadUrl}
         disabled={!pdfDownloadUrl}
-        download
+        download={downloadFilename}
         href={pdfDownloadUrl || '#'}
         target="_blank"
         style={{ pointerEvents: 'auto' }}

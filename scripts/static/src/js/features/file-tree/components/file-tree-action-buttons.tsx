@@ -27,6 +27,17 @@ export default function FileTreeActionButtons({
     startUploadingDocOrFile,
   } = useFileTreeActionable()
 
+  // Switch the rail to the file-tree tab so the user can see the new
+  // entity show up after the create modal closes. No-op if the tab is
+  // already selected.
+  const focusFileTree = () => {
+    window.dispatchEvent(
+      new CustomEvent('ui:select-rail-tab', {
+        detail: { tab: 'file-tree', open: true },
+      })
+    )
+  }
+
   useCommandProvider(() => {
     if (!canCreate || fileTreeReadOnly || !write) return
     return [
@@ -35,19 +46,24 @@ export default function FileTreeActionButtons({
         id: 'new_file',
         handler: ({ location }) => {
           eventTracking.sendMB('new-file-click', { location })
+          focusFileTree()
           startCreatingDocOrFile()
         },
       },
       {
         label: t('new_folder'),
         id: 'new_folder',
-        handler: startCreatingFolder,
+        handler: () => {
+          focusFileTree()
+          startCreatingFolder()
+        },
       },
       {
         label: t('upload_file'),
         id: 'upload_file',
         handler: ({ location }) => {
           eventTracking.sendMB('upload-click', { location })
+          focusFileTree()
           startUploadingDocOrFile()
         },
       },

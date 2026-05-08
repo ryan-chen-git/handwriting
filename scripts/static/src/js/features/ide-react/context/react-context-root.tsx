@@ -1,5 +1,4 @@
 import React, { ElementType, FC, PropsWithChildren } from 'react'
-import { ChatProvider } from '@/features/chat/context/chat-context'
 import { ConnectionProvider } from './connection-context'
 import { DetachCompileProvider } from '@/shared/context/detach-compile-context'
 import { DetachProvider } from '@/shared/context/detach-context'
@@ -45,7 +44,6 @@ export const ReactContextRoot: FC<
   }>
 > = ({ children, providers = {} }) => {
   const Providers = {
-    ChatProvider,
     ConnectionProvider,
     DetachCompileProvider,
     DetachProvider,
@@ -119,8 +117,7 @@ export const ReactContextRoot: FC<
                                                 <Providers.ReferencesProvider>
                                                   <Providers.LocalCompileProvider>
                                                     <Providers.DetachCompileProvider>
-                                                      <Providers.ChatProvider>
-                                                        <Providers.FileTreeOpenProvider>
+                                                      <Providers.FileTreeOpenProvider>
                                                           <Providers.TabsProvider>
                                                             <Providers.OnlineUsersProvider>
                                                               <Providers.MetadataProvider>
@@ -137,7 +134,6 @@ export const ReactContextRoot: FC<
                                                             </Providers.OnlineUsersProvider>
                                                           </Providers.TabsProvider>
                                                         </Providers.FileTreeOpenProvider>
-                                                      </Providers.ChatProvider>
                                                     </Providers.DetachCompileProvider>
                                                   </Providers.LocalCompileProvider>
                                                 </Providers.ReferencesProvider>

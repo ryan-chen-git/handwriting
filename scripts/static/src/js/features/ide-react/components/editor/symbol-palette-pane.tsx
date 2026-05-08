@@ -1,18 +1,13 @@
-import React, { ElementType, FC } from 'react'
-import importOverleafModules from '../../../../../macros/import-overleaf-module.macro'
+import { FC } from 'react'
+import SymbolPalette from '@/features/source-editor/components/symbol-palette'
 
-const symbolPaletteComponents = importOverleafModules(
-  'sourceEditorSymbolPalette'
-) as { import: { default: ElementType }; path: string }[]
-
+// Offline build: upstream loads its symbol palette via
+// `importOverleafModules('sourceEditorSymbolPalette')`, which only resolves
+// in their closed-source bundle. We render our local reconstruction here.
 const SymbolPalettePane: FC = () => {
   return (
     <div className="ide-react-symbol-palette">
-      {symbolPaletteComponents.map(
-        ({ import: { default: Component }, path }) => (
-          <Component key={path} />
-        )
-      )}
+      <SymbolPalette />
     </div>
   )
 }

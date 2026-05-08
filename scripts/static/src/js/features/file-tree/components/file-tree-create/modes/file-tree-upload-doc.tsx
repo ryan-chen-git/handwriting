@@ -194,6 +194,20 @@ export default function FileTreeUploadDoc() {
               refreshProjectMetadata(projectId, response.body.entity_id)
             }, 250)
           }
+          // Offline build: real server emits reciveNewDoc/reciveNewFile after
+          // upload — synthesize it locally so the file tree updates.
+          const sock = (window as any).__socket
+          if (sock?._simulate) {
+            const entity = {
+              _id: response.body.entity_id,
+              name: response.body.name || file?.name,
+            }
+            const event =
+              response.body.entity_type === 'doc'
+                ? 'reciveNewDoc'
+                : 'reciveNewFile'
+            sock._simulate(event, parentFolderId, entity)
+          }
         })
         // handle upload errors
         .on('upload-error', (file, error, response) => {

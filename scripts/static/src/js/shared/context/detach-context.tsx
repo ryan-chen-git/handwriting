@@ -40,9 +40,22 @@ export const detachChannel =
     ? new BroadcastChannel(detachChannelId)
     : undefined
 
+// Offline build: upstream Overleaf's server reads the URL and renders the page
+// with `ol-detachRole` set in the meta tag. We have one HTML file, so derive
+// the role from the URL pathname instead — `/detached` and `/detacher` are
+// the suffixes the URL helper round-trips through.
+const detachRoleFromPathname = (): DetachRole => {
+  const path = window.location.pathname
+  if (path.endsWith('/detached')) return 'detached'
+  if (path.endsWith('/detacher')) return 'detacher'
+  return null
+}
+
 export const DetachProvider: FC<React.PropsWithChildren> = ({ children }) => {
   const [lastDetachedConnectedAt, setLastDetachedConnectedAt] = useState<Date>()
-  const [role, setRole] = useState(() => getMeta('ol-detachRole') || null)
+  const [role, setRole] = useState<DetachRole>(
+    () => getMeta('ol-detachRole') || detachRoleFromPathname() || null
+  )
   const {
     addHandler: addEventHandler,
     deleteHandler: deleteEventHandler,

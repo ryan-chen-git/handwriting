@@ -9,7 +9,6 @@ import { MenuBarOption } from '@/shared/components/menu-bar/menu-bar-option'
 import { useTranslation } from 'react-i18next'
 import ChangeLayoutOptions from './change-layout-options'
 import { ElementType, useCallback, useMemo, useState } from 'react'
-import { useLayoutContext } from '@/shared/context/layout-context'
 import { useCommandProvider } from '@/features/ide-react/hooks/use-command-provider'
 import CommandDropdown, {
   CommandSection,
@@ -22,8 +21,6 @@ import { isSplitTestEnabled } from '@/utils/splitTestUtils'
 import { useDetachCompileContext as useCompileContext } from '@/shared/context/detach-compile-context'
 import { useProjectSettingsContext } from '@/features/editor-left-menu/context/project-settings-context'
 import getMeta from '@/utils/meta'
-import EditorCloneProjectModalWrapper from '@/features/clone-project-modal/components/editor-clone-project-modal-wrapper'
-import useOpenProject from '@/shared/hooks/use-open-project'
 import importOverleafModules from '../../../../../macros/import-overleaf-module.macro'
 
 const menubarExtraComponents = importOverleafModules(
@@ -35,27 +32,17 @@ const menubarExtraComponents = importOverleafModules(
 export const ToolbarMenuBar = () => {
   const { t } = useTranslation()
 
-  const { setView, view } = useLayoutContext()
   const { pdfUrl } = useCompileContext()
-  const wordCountEnabled = pdfUrl || isSplitTestEnabled('word-count-client')
+  // Offline build: word count works for any compiled PDF since our local
+  // compile_server provides /chars; gate on having a PDF, drop the
+  // split-test fallback that would have required upstream's web service.
+  const wordCountEnabled = !!pdfUrl
   const [showWordCountModal, setShowWordCountModal] = useState(false)
-  const [showCloneProjectModal, setShowCloneProjectModal] = useState(false)
-  const openProject = useOpenProject()
 
-  const anonymous = getMeta('ol-anonymous')
   const showSupport = getMeta('ol-showSupport')
-  const showDocumentation = getMeta('ol-wikiEnabled')
 
   useCommandProvider(
     () => [
-      {
-        type: 'command',
-        label: t('show_version_history'),
-        handler: () => {
-          setView(view === 'history' ? 'editor' : 'history')
-        },
-        id: 'show_version_history',
-      },
       {
         type: 'command',
         label: t('word_count_lower'),
@@ -65,26 +52,16 @@ export const ToolbarMenuBar = () => {
         },
         id: 'word_count',
       },
-      {
-        type: 'command',
-        label: t('make_a_copy'),
-        disabled: anonymous,
-        handler: () => {
-          setShowCloneProjectModal(true)
-        },
-        id: 'copy_project',
-      },
     ],
-    [t, setView, view, wordCountEnabled, anonymous]
+    [t, wordCountEnabled]
   )
   const fileMenuStructure: MenuStructure = useMemo(
     () => [
       {
         id: 'file-file-tree',
-        children: ['new_file', 'new_folder', 'upload_file', 'copy_project'],
+        children: ['new_file', 'new_folder', 'upload_file'],
       },
-      { id: 'file-tools', children: ['show_version_history', 'word_count'] },
-      { id: 'submit', children: ['submit-project', 'manage-template'] },
+      { id: 'file-tools', children: ['word_count'] },
       {
         id: 'file-download',
         children: [
@@ -217,6 +194,9 @@ export const ToolbarMenuBar = () => {
   const openKeyboardShortcutsModal = useCallback(() => {
     setActiveModal('keyboard-shortcuts')
   }, [setActiveModal])
+  const openDocumentationModal = useCallback(() => {
+    setActiveModal('documentation')
+  }, [setActiveModal])
   const openContactUsModal = useCallback(() => {
     setActiveModal('contact-us')
   }, [setActiveModal])
@@ -278,15 +258,11 @@ export const ToolbarMenuBar = () => {
             title={t('keyboard_shortcuts')}
             onClick={openKeyboardShortcutsModal}
           />
-          {showDocumentation && (
-            <MenuBarOption
-              title={t('documentation')}
-              eventKey="documentation"
-              href="/learn"
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          )}
+          <MenuBarOption
+            eventKey="documentation"
+            title={t('documentation')}
+            onClick={openDocumentationModal}
+          />
           {showSupport && (
             <>
               <DropdownDivider />
@@ -302,11 +278,6 @@ export const ToolbarMenuBar = () => {
       <WordCountModal
         show={showWordCountModal}
         handleHide={() => setShowWordCountModal(false)}
-      />
-      <EditorCloneProjectModalWrapper
-        show={showCloneProjectModal}
-        handleHide={() => setShowCloneProjectModal(false)}
-        openProject={openProject}
       />
       {menubarExtraComponents.map(
         ({ import: { default: Component } }, index) => (

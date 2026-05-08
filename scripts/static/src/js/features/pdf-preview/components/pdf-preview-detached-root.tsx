@@ -41,7 +41,12 @@ function EditorRedesignWrapper({ children }: { children: React.ReactNode }) {
 
 export default PdfPreviewDetachedRoot // for testing
 
-const element = document.getElementById('pdf-preview-detached-root')
+// Offline build: upstream renders this page with #pdf-preview-detached-root,
+// but our index.html only has #ide-root (we serve a single entry HTML for
+// /, /detacher, and /detached). Mount onto whichever exists.
+const element =
+  document.getElementById('pdf-preview-detached-root') ||
+  document.getElementById('ide-root')
 if (element) {
   const root = createRoot(element)
   root.render(<PdfPreviewDetachedRoot />)

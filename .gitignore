@@ -7,8 +7,8 @@ __pycache__/
 .env
 
 # Agent / scratch
-AGENT_CONTEXT.md
 .codex
+AGENTS.md
 
 # Node
 node_modules/

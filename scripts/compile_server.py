@@ -170,6 +170,14 @@ LUALATEX = resolve_lualatex()
 # exceed 90s for the kinds of documents this server runs.
 LUALATEX_TIMEOUT_S = 90
 
+# Persistent compile working directory. Reusing the same directory across
+# compiles preserves .aux / .toc / .bbl, which lets lualatex skip redundant
+# passes when the user only edits prose and cross-references stay valid —
+# the same trick Overleaf's CLSI uses per-project. Stale .aux from large
+# structural edits self-corrects on the next pass.
+COMPILE_CACHE_DIR = Path(tempfile.gettempdir()) / "hwcompile-cache"
+COMPILE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
 RAW_SAMPLES_DIR = REPO_ROOT / "data" / "raw_samples"
 PROCESSED_DIR = REPO_ROOT / "data" / "processed"
 DEFAULT_COLLECT_URL = pull_samples_mod.DEFAULT_URL
@@ -226,47 +234,52 @@ def _read_existing_manifest() -> dict | None:
         return None
 
 
-def build_font(logs, skip_pull=False):
-    """Run pull → preprocess → (cached) build_font in this process.
+def run_data_pipeline(logs):
+    """Pull samples from the collect-app, preprocess them, and (re)build the
+    handwriting font. Driven exclusively by the rail's "Pull samples" button.
 
-    Returns True on success, False on a build step failure (already logged).
-    Skips build_font when the SHA-256 of the processed/ contents matches the
-    existing manifest's samples_hash and the .otf is present.
+    Each step appends a one-line status to `logs`. Returns a dict on success
+    or raises on failure so the caller can surface the error.
     """
-    try:
-        if not skip_pull:
-            with _capture_step(logs, "pull_samples"):
-                pull_samples_mod.pull_samples(DEFAULT_COLLECT_URL, RAW_SAMPLES_DIR)
-        else:
-            logs.append("[skip pull] reusing existing data/raw_samples/")
+    # 1/3 — pull
+    pull_count = pull_samples_mod.pull_samples(DEFAULT_COLLECT_URL, RAW_SAMPLES_DIR)
+    logs.append(f"[1/3] pulled {pull_count} sample(s) from {DEFAULT_COLLECT_URL}")
 
-        with _capture_step(logs, "preprocess"):
-            processed, rejected = preprocess_mod.preprocess_all(RAW_SAMPLES_DIR, PROCESSED_DIR)
-            print(f"preprocess: {processed} processed, {rejected} rejected")
+    # 2/3 — preprocess
+    processed, rejected = preprocess_mod.preprocess_all(RAW_SAMPLES_DIR, PROCESSED_DIR)
+    logs.append(f"[2/3] preprocessed {processed} sample(s), rejected {rejected}")
 
-        new_hash = build_font_mod._hash_processed_dir(PROCESSED_DIR)
-        existing = _read_existing_manifest()
-        if (
-            existing
-            and existing.get("samples_hash") == new_hash
-            and FONT_OUT.exists()
-        ):
-            logs.append(
-                f"[cache hit] processed-dir hash matches manifest "
-                f"({new_hash[:12]}…); skipping build_font."
-            )
-            return True
+    # 3/3 — build font (cache by hash of processed/ contents)
+    new_hash = build_font_mod._hash_processed_dir(PROCESSED_DIR)
+    existing = _read_existing_manifest()
+    cache_hit = (
+        existing
+        and existing.get("samples_hash") == new_hash
+        and FONT_OUT.exists()
+    )
+    if cache_hit:
+        logs.append(
+            f"[3/3] font cache hit (samples hash {new_hash[:12]}…) — "
+            f"reusing {FONT_OUT.name}"
+        )
+        glyph_count = existing.get("char_count", 0) if existing else 0
+    else:
+        library = SampleLibrary.load(PROCESSED_DIR)
+        glyphs = build_font_mod.build_font(library, FONT_OUT)
+        build_font_mod.write_manifest(FONT_OUT, PROCESSED_DIR, library, glyphs)
+        glyph_count = len(glyphs)
+        logs.append(
+            f"[3/3] built {FONT_OUT.name} from {library.count()} sample(s) "
+            f"across {glyph_count} glyph(s)"
+        )
 
-        with _capture_step(logs, "build_font"):
-            library = SampleLibrary.load(PROCESSED_DIR)
-            print(f"loaded: {library.count()} samples across {len(library.chars())} chars")
-            glyphs = build_font_mod.build_font(library, FONT_OUT)
-            manifest_path = build_font_mod.write_manifest(FONT_OUT, PROCESSED_DIR, library, glyphs)
-            print(f"manifest: {manifest_path}")
-        return True
-    except Exception as e:
-        logs.append(f"[build error] {e!r}")
-        return False
+    return {
+        "pull_count": pull_count,
+        "processed": processed,
+        "rejected": rejected,
+        "glyph_count": glyph_count,
+        "cache_hit": bool(cache_hit),
+    }
 
 
 def _section(logs: list, title: str, body: str) -> None:
@@ -286,155 +299,65 @@ def _numbered(src: str) -> str:
     return "\n".join(f"{str(i + 1).rjust(width)} | {ln}" for i, ln in enumerate(lines))
 
 
-def compile_latex(latex_source, rebuild, skip_pull, logs):
-    if rebuild or not FONT_OUT.exists():
-        if not build_font(logs, skip_pull=skip_pull):
-            return None
-    else:
-        logs.append(f"[skip rebuild] using existing {FONT_OUT}")
+def compile_latex(latex_source, logs, stop_on_first_error=False):
+    """Run lualatex on the user's source and return the PDF bytes.
 
-    if not LUALATEX:
-        logs.append("[error] lualatex not found. Install a TeX distribution:")
-        logs.append("  Windows:       winget install MiKTeX.MiKTeX")
-        logs.append("  macOS:         brew install --cask mactex")
-        logs.append("  Debian/Ubuntu: sudo apt install texlive-luatex texlive-latex-extra texlive-fonts-extra texlive-science")
+    Assumes the handwriting font is already built — building/pulling is the
+    job of the /pull-samples endpoint, not this one.
+    """
+    if not FONT_OUT.exists():
+        logs.append(
+            "Handwriting font not built yet. Click 'Pull samples' in the "
+            "rail to download the latest samples and build the font."
+        )
         return None
 
-    # --- Request summary -------------------------------------------------
-    req_info = [
-        f"source bytes: {len(latex_source)}",
-        f"source lines: {latex_source.count(chr(10)) + 1}",
-        f"has \\documentclass: {'yes' if '\\documentclass' in latex_source else 'NO'}",
-        f"has \\begin{{document}}: {'yes' if '\\begin{document}' in latex_source else 'NO'}",
-        f"has \\end{{document}}: {'yes' if '\\end{document}' in latex_source else 'NO'}",
-        "",
-        "first 300 chars:",
-        latex_source[:300],
-    ]
-    _section(logs, "request", "\n".join(req_info))
+    if not LUALATEX:
+        logs.append("lualatex not found. Install a TeX distribution:")
+        logs.append("  Windows:       winget install MiKTeX.MiKTeX")
+        logs.append("  macOS:         brew install --cask mactex")
+        logs.append(
+            "  Debian/Ubuntu: sudo apt install texlive-luatex "
+            "texlive-latex-extra texlive-fonts-extra texlive-science"
+        )
+        return None
 
-    # --- Font environment -----------------------------------------------
-    font_info = [f"font directory (Path=): {_FONT_DIR}/"]
-    if FONT_OUT.exists():
-        try:
-            st = FONT_OUT.stat()
-            font_info.append(f"HandwritingFont.otf: exists ({st.st_size} bytes)")
-        except OSError as e:
-            font_info.append(f"HandwritingFont.otf: stat failed: {e}")
-    else:
-        font_info.append(f"HandwritingFont.otf: MISSING at {FONT_OUT}")
-        font_info.append("  (handwriting font won't apply; lualatex may still succeed")
-        font_info.append("   with a fallback font, which is almost certainly the bug)")
-    try:
-        outputs_listing = sorted(p.name for p in Path(_FONT_DIR).iterdir())
-        font_info.append(f"outputs/ contents: {outputs_listing}")
-    except OSError as e:
-        font_info.append(f"outputs/ listing failed: {e}")
-    if FONT_MANIFEST.exists():
-        try:
-            mf = json.loads(FONT_MANIFEST.read_text(encoding="utf-8"))
-            font_info.append(
-                f"manifest: built_at={mf.get('built_at')} "
-                f"sample_count={mf.get('sample_count')} "
-                f"chars={mf.get('char_count')} "
-                f"pressure={mf.get('pressure_with')}with/{mf.get('pressure_without')}without "
-                f"hash={(mf.get('samples_hash') or '')[:12]}"
-            )
-        except (OSError, ValueError) as e:
-            font_info.append(f"manifest read failed: {e}")
-    else:
-        font_info.append("manifest: (none — font was built before manifests existed, or never built)")
-    _section(logs, "font environment", "\n".join(font_info))
-
-    # --- Normalize -------------------------------------------------------
-    final_tex, stripped, marker_idx = normalize_font_preamble(latex_source)
-    norm_info = [
-        f"lines stripped: {len(stripped)}",
-    ]
+    # Strip any user-provided fontspec setup and inject ours.
+    final_tex, stripped, _marker_idx = normalize_font_preamble(latex_source)
     if stripped:
-        norm_info.append("stripped lines:")
-        norm_info.extend(f"  - {ln}" for ln in stripped)
-    norm_info.append(
-        f"\\begin{{document}} byte offset after stripping: {marker_idx}"
-        + (" (NOT FOUND — injection skipped)" if marker_idx < 0 else " (font block injected here)")
-    )
-    _section(logs, "normalize", "\n".join(norm_info))
+        _section(
+            logs,
+            "preamble normalization",
+            f"stripped {len(stripped)} font setup line(s):\n"
+            + "\n".join(f"  - {ln}" for ln in stripped),
+        )
 
-    # --- Final doc.tex ---------------------------------------------------
-    _section(logs, "final doc.tex (what lualatex will see)", _numbered(final_tex))
+    _section(logs, "final source", _numbered(final_tex))
 
-    tmp = Path(tempfile.mkdtemp(prefix="hwcompile-"))
-    try:
-        tex_path = tmp / "doc.tex"
-        tex_path.write_text(final_tex, encoding="utf-8")
+    tex_path = COMPILE_CACHE_DIR / "doc.tex"
+    tex_path.write_text(final_tex, encoding="utf-8")
 
-        cmd = [
-            LUALATEX,
-            "-interaction=nonstopmode",
-            "-halt-on-error",
-            "-no-shell-escape",
-            f"-output-directory={tmp}",
-            str(tex_path),
-        ]
-        _section(logs, "lualatex invocation", "$ " + " ".join(cmd))
-        code, out, err = run_capture(cmd, tmp, LUALATEX_TIMEOUT_S)
+    cmd = [
+        LUALATEX,
+        "-interaction=nonstopmode",
+        "-no-shell-escape",
+        f"-output-directory={COMPILE_CACHE_DIR}",
+    ]
+    if stop_on_first_error:
+        cmd.insert(2, "-halt-on-error")
+    cmd.append(str(tex_path))
 
-        # Pull the critical diagnostics out of the lualatex .log file —
-        # that's where fontspec reports which font it actually loaded.
-        log_path = tmp / "doc.log"
-        fontspec_lines: list[str] = []
-        if log_path.exists():
-            try:
-                log_text = log_path.read_text(encoding="utf-8", errors="replace")
-                for ln in log_text.split("\n"):
-                    low = ln.lower()
-                    if any(
-                        needle in low
-                        for needle in (
-                            "fontspec",
-                            "handwritingfont",
-                            "latinmodern",
-                            "setmainfont",
-                            "setmathfont",
-                            "cannot find",
-                            "! ",
-                            "no file",
-                            "font ",
-                        )
-                    ):
-                        fontspec_lines.append(ln)
-            except OSError as e:
-                fontspec_lines.append(f"[read doc.log failed: {e}]")
-        if fontspec_lines:
-            _section(
-                logs,
-                "fontspec / error lines from doc.log",
-                "\n".join(fontspec_lines[-200:]),
-            )
+    code, out, err = run_capture(cmd, COMPILE_CACHE_DIR, LUALATEX_TIMEOUT_S)
 
-        _section(logs, f"lualatex stdout (exit {code}, last 4000 chars)", (out or "")[-4000:])
-        if err:
-            _section(logs, "lualatex stderr (last 2000 chars)", err[-2000:])
+    _section(logs, f"lualatex (exit {code})", (out or "")[-4000:])
+    if err:
+        _section(logs, "lualatex stderr", err[-2000:])
 
-        # --- Artifacts --------------------------------------------------
-        pdf_path = tmp / "doc.pdf"
-        artifact_lines = []
-        try:
-            for p in sorted(tmp.iterdir()):
-                try:
-                    artifact_lines.append(f"{p.name}  ({p.stat().st_size} bytes)")
-                except OSError:
-                    artifact_lines.append(p.name)
-        except OSError as e:
-            artifact_lines.append(f"tmp listing failed: {e}")
-        _section(logs, "artifacts (build dir)", "\n".join(artifact_lines))
-
-        if not pdf_path.exists():
-            logs.append(f"[exit {code}] lualatex produced no pdf")
-            return None
-        return pdf_path.read_bytes()
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+    pdf_path = COMPILE_CACHE_DIR / "doc.pdf"
+    if not pdf_path.exists():
+        logs.append(f"[exit {code}] no PDF produced")
+        return None
+    return pdf_path.read_bytes()
 
 
 def read_collected_chars():
@@ -498,6 +421,30 @@ class Handler(BaseHTTPRequestHandler):
             chars, counts, mtime = read_collected_chars()
             self._json(200, {"chars": chars, "counts": counts, "mtime": mtime})
             return
+        if self.path.startswith("/samples"):
+            # /samples?char=X — return the raw strokes for every collected
+            # sample of that character, for the handwriting viewer modal.
+            from urllib.parse import parse_qs, urlsplit
+            query = parse_qs(urlsplit(self.path).query)
+            target = (query.get("char") or [""])[0]
+            if not target:
+                self._json(400, {"error": "char query param required"})
+                return
+            if not RAW_SAMPLES_FILE.exists():
+                self._json(200, {"char": target, "samples": []})
+                return
+            try:
+                data = json.loads(RAW_SAMPLES_FILE.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as e:
+                self._json(500, {"error": f"read samples failed: {e}"})
+                return
+            matches = [
+                {"strokes": s.get("strokes", [])}
+                for s in data.get("samples", [])
+                if s.get("char") == target
+            ]
+            self._json(200, {"char": target, "samples": matches})
+            return
         if self.path == "/default_template":
             self._json(200, {"latex": DEFAULT_TEMPLATE})
             return
@@ -530,6 +477,32 @@ class Handler(BaseHTTPRequestHandler):
         self._json(404, {"error": "not found"})
 
     def do_POST(self):
+        if self.path == "/pull-samples":
+            logs: list[str] = []
+            try:
+                with BUILD_LOCK:
+                    summary = run_data_pipeline(logs)
+                chars, counts, mtime = read_collected_chars()
+                self._json(200, {
+                    "ok": True,
+                    "count": summary["pull_count"],
+                    "processed": summary["processed"],
+                    "rejected": summary["rejected"],
+                    "glyph_count": summary["glyph_count"],
+                    "cache_hit": summary["cache_hit"],
+                    "chars": chars,
+                    "counts": counts,
+                    "mtime": mtime,
+                    "log": "\n".join(logs),
+                })
+            except Exception as e:
+                logs.append(f"[error] {e}")
+                self._json(500, {
+                    "ok": False,
+                    "error": str(e),
+                    "log": "\n".join(logs),
+                })
+            return
         if self.path != "/compile":
             self._json(404, {"error": "not found"})
             return
@@ -549,13 +522,12 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(latex, str) or not latex:
             self._json(400, {"error": "latex body required"})
             return
-        rebuild = bool(req.get("rebuild", True))
-        skip_pull = bool(req.get("skip_pull", False))
+        stop_on_first_error = bool(req.get("stop_on_first_error", False))
 
         logs = []
         try:
             with BUILD_LOCK:
-                pdf = compile_latex(latex, rebuild, skip_pull, logs)
+                pdf = compile_latex(latex, logs, stop_on_first_error)
         except Exception as e:
             logs.append(f"[exception] {e!r}")
             self._json(500, {"ok": False, "log": "\n".join(logs), "stage": "exception"})
@@ -680,7 +652,7 @@ def main():
     url = f"http://{args.host}:{args.port}"
     print(f"Test Compile UI ready: {url}")
     print(f"  lualatex: {LUALATEX}")
-    font_status = "built" if FONT_OUT.exists() else "not yet built (first Compile will build it)"
+    font_status = "built" if FONT_OUT.exists() else "not yet built (click 'Pull samples' in the rail)"
     print(f"  font:     {FONT_OUT} [{font_status}]")
     print("Press Ctrl+C to stop.")
     if not args.no_open:

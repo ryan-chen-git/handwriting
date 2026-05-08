@@ -14,9 +14,6 @@ import BreadcrumbsSetting from '@/features/settings/components/editor-settings/b
 import NonBlinkingCursorSetting from '@/features/settings/components/editor-settings/non-blinking-cursor-setting'
 import MathPreviewSetting from '@/features/settings/components/editor-settings/math-preview-setting'
 import RootDocumentSetting from '@/features/settings/components/compiler-settings/root-document-setting'
-import CompilerSetting from '@/features/settings/components/compiler-settings/compiler-setting'
-import ImageNameSetting from '@/features/settings/components/compiler-settings/image-name-setting'
-import DraftSetting from '@/features/settings/components/compiler-settings/draft-setting'
 import StopOnFirstErrorSetting from '@/features/settings/components/compiler-settings/stop-on-first-error-setting'
 import AutoCompileSetting from '@/features/settings/components/compiler-settings/auto-compile-setting'
 import OverallThemeSetting from '@/features/settings/components/appearance-settings/overall-theme-setting'
@@ -30,7 +27,6 @@ import DarkModePdfSetting from '@/features/settings/components/appearance-settin
 import { useProjectSettingsContext } from '@/features/editor-left-menu/context/project-settings-context'
 import { useFeatureFlag } from '@/shared/context/split-test-context'
 import ProjectNotificationsSetting from '@/features/settings/components/editor-settings/project-notifications-setting'
-import getMeta from '@/utils/meta'
 import type {
   SettingsEntry,
   SettingsSection,
@@ -71,7 +67,6 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const { t } = useTranslation()
-  const { isOverleaf } = getMeta('ol-ExposedSettings')
   const { overallTheme } = useProjectSettingsContext()
 
   // TODO ide-redesign-cleanup: Rename this field and move it directly into this context
@@ -171,18 +166,9 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
                 key: 'rootDocId',
                 component: <RootDocumentSetting />,
               },
-              {
-                key: 'compiler',
-                component: <CompilerSetting />,
-              },
-              {
-                key: 'imageName',
-                component: <ImageNameSetting />,
-              },
-              {
-                key: 'draft',
-                component: <DraftSetting />,
-              },
+              // Offline build: our Python server only runs lualatex, and
+              // ignores the draft body field, so the engine + draft pickers
+              // are dead. Trimmed.
               {
                 key: 'stopOnFirstError',
                 component: <StopOnFirstErrorSetting />,
@@ -251,28 +237,8 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
         hidden: !hasEmailNotifications,
       },
 
-      {
-        key: 'account_settings',
-        title: t('account_settings'),
-        icon: 'settings',
-        href: '/user/settings',
-      },
-      {
-        key: 'subscription',
-        title: t('subscription'),
-        icon: 'account_balance',
-        href: '/user/subscription',
-        hidden: !isOverleaf,
-      },
     ],
-    [
-      t,
-      hasEditorTabs,
-      overallTheme,
-      hasEmailNotifications,
-      isOverleaf,
-      editorTabExtraSections,
-    ]
+    [t, hasEditorTabs, overallTheme, hasEmailNotifications, editorTabExtraSections]
   )
 
   const settingsTabs = useMemo(

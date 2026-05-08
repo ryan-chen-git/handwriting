@@ -25,7 +25,11 @@ export type RailTabKey =
   | 'full-project-search'
   | 'workbench'
 
-export type RailModalKey = 'keyboard-shortcuts' | 'contact-us' | 'dictionary'
+export type RailModalKey =
+  | 'keyboard-shortcuts'
+  | 'contact-us'
+  | 'dictionary'
+  | 'documentation'
 
 const RailContext = createContext<
   | {

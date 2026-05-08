@@ -13,13 +13,11 @@ import { CompileOptions, CompileResponseData } from '@ol-types/compile'
 import { DeliveryLatencies } from './types'
 
 const AUTO_COMPILE_MAX_WAIT = 5000
-// We add a 2 second debounce to sending user changes to server if they aren't
-// collaborating with anyone. This needs to be higher than SINGLE_USER_FLUSH_DELAY, and allow for
-// client to server latency, otherwise we compile before the op reaches the server
-// and then again on ack.
+// Debounce auto-compile so we don't recompile on every keystroke. Buffered
+// local edits flush before the timer fires.
 const AUTO_COMPILE_DEBOUNCE = 2500
 
-// If there is a pending op, wait for it to be saved before compiling
+// Bound on how long the compile waits for any pending local edits to flush.
 const PENDING_OP_MAX_WAIT = 10000
 
 const searchParams = new URLSearchParams(window.location.search)
@@ -130,7 +128,7 @@ export default class DocumentCompiler {
       )
 
       // reset values
-      this.setChangedAt(0) // TODO: wait for doc:saved?
+      this.setChangedAt(0)
 
       const params = this.buildCompileParams(options)
 
@@ -157,8 +155,19 @@ export default class DocumentCompiler {
       // CodeMirror view (set by codemirror-view.tsx) and POST it to our
       // local Python compile_server, then translate the response into the
       // CompileResponseData shape upstream's PDF preview expects.
-      const view = (window as unknown as { __editorView?: { state: { doc: { toString(): string } } } }).__editorView
-      const latex = view?.state.doc.toString() ?? ''
+      //
+      // On initial load, auto-compile-on-load can fire before CodeMirror
+      // mounts and registers `__editorView`. Fall back to the seed in
+      // `__seedDocLines.main` so the first compile uses the starter template
+      // instead of an empty string (which would produce a "No PDF" error).
+      const win = window as unknown as {
+        __editorView?: { state: { doc: { toString(): string } } }
+        __seedDocLines?: Record<string, string[]>
+      }
+      const latex =
+        win.__editorView?.state.doc.toString() ??
+        win.__seedDocLines?.main?.join('\n') ??
+        ''
 
       // Skip the network round-trip when there's nothing to compile (auto-
       // compile fires once on mount before the editor view is registered).
@@ -169,7 +178,10 @@ export default class DocumentCompiler {
         const localResp = await fetch('/compile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ latex, rebuild: true }),
+          body: JSON.stringify({
+            latex,
+            stop_on_first_error: !!options.stopOnFirstError,
+          }),
           signal: this.signal,
         })
         localJson = await localResp.json()
@@ -257,7 +269,8 @@ export default class DocumentCompiler {
   buildPostCompileParams() {
     const params = new URLSearchParams()
 
-    // the id of the CLSI server that processed the previous compile request
+    // Offline build: clsiServerId is hardcoded to 'local' in the response we
+    // synthesize from compile_server.py — kept for parity with upstream.
     if (this.clsiServerId) {
       params.set('clsiserverid', this.clsiServerId)
     }
@@ -268,9 +281,6 @@ export default class DocumentCompiler {
   // build the query parameters for the compile request
   buildCompileParams(options: CompileOptions) {
     const params = new URLSearchParams()
-
-    // note: no clsiserverid query param is set on "compile" requests,
-    // as this is added in the backend by the web api
 
     // tell the server whether this is an automatic or manual compile request
     if (options.isAutoCompileOnLoad || options.isAutoCompileOnChange) {

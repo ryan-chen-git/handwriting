@@ -143,7 +143,6 @@ export const MetadataProvider: FC<React.PropsWithChildren> = ({ children }) => {
       debouncerRef.current.set(
         docId,
         window.setTimeout(() => {
-          // TODO: wait for the document to be saved?
           loadDocMetaFromServer(docId)
           debouncerRef.current.delete(docId)
         }, 2000)

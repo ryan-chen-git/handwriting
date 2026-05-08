@@ -52,6 +52,15 @@ class SocketShimNoop extends SocketShimBase {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       disconnect(reason) {},
     }
+
+    // Offline build: real registry of event listeners so client code that
+    // expects upstream's server-pushed events (file-tree mutations, etc.)
+    // can be triggered locally. Stored as Map<event, Set<handler>>.
+    this._listeners = new Map()
+
+    // Expose the singleton so offline glue (sync-mutation, upload-success)
+    // can synthesize "recive*" events after local writes succeed.
+    window.__socket = this
   }
 
   connect() {}
@@ -91,229 +100,42 @@ class SocketShimNoop extends SocketShimBase {
     // For unknown events, call back with no error so the IDE doesn't hang.
     cb(null)
   }
-  on() {}
-  removeListener() {}
-}
-
-class SocketShimV0 extends SocketShimBase {
-  static connect(url, options) {
-    return new SocketShimV0(io.connect(url, options))
-  }
-
-  constructor(socket) {
-    super(socket)
-    this.socket = this._socket.socket
-    const self = this
-    Object.defineProperty(this.socket, 'transport', {
-      get() {
-        return self._transport
-      },
-      set(v) {
-        self.forceDisconnectWithoutEvent()
-        self._transport = v
-      },
-    })
-  }
-
-  forceDisconnectWithoutEvent() {
-    clearTimeout(this.socket.heartbeatTimeoutTimer)
-    if (this._transport) this.forceCloseTransport(this._transport)
-  }
-
-  forceCloseTransport(transport) {
-    transport.clearTimeouts()
-    if (transport instanceof io.Transport.websocket) {
-      // retry closing
-      transport.websocket.onopen = transport.websocket.onmessage = () =>
-        transport.websocket.close()
-      // mute close/error handler
-      transport.websocket.onclose = transport.websocket.onerror = () => {}
-      // disconnect
-      try {
-        transport.websocket.close()
-      } catch {}
-    } else if (transport instanceof io.Transport['xhr-polling']) {
-      // mute data/close handler and block new polling GET requests
-      transport.onData = transport.onClose = transport.get = () => {}
-      // abort pending long-polling/POST request
-      for (const xhr of [transport.xhr, transport.sendXHR]) {
-        if (!xhr) continue // not pending
-        // mute xhr callbacks
-        xhr.onreadystatechange = xhr.onload = xhr.onerror = () => {}
-        try {
-          xhr.abort()
-        } catch {}
-      }
-      transport.xhr = transport.sendXHR = null
-      // Mark long-polling client as disconnected to avoid "ghost" connected client.
-      fetch(transport.prepareUrl() + '/?disconnect=1', {
-        // Let the request continue after navigating away from or reloading the page.
-        keepalive: true,
-      })
-        // Avoid leaving a dangling response on the wire.
-        .then(res => res.text())
-        .catch(() => {})
-    } else {
-      try {
-        transport.close()
-      } catch {}
-      debugConsole.warn('unexpected socket.io transport', transport)
-    }
-  }
-}
-
-class SocketShimV2 extends SocketShimBase {
-  static connect(url, options) {
-    options.forceNew = options['force new connection']
-    // .resource has no leading slash, path wants to see one.
-    options.path = '/' + options.resource
-    options.reconnection = options.reconnect
-    options.timeout = options['connect timeout']
-    return new SocketShimV2(url, options)
-  }
-
-  static get EVENT_MAP() {
-    // Use the v2 event names transparently to the frontend.
-    const connectionFailureEvents = [
-      'connect_error',
-      'connect_timeout',
-      'error',
-    ]
-    return new Map([
-      ['connect_failed', connectionFailureEvents],
-      ['error', connectionFailureEvents],
-    ])
-  }
-
-  _on(event, handler) {
-    // Keep track of our event listeners.
-    // We move them to a new socket in ._replaceSocketWithNewInstance()
-    if (!this._events.has(event)) {
-      this._events.set(event, [handler])
-    } else {
-      this._events.get(event).push(handler)
-    }
-    this._socket.on(event, handler)
-  }
 
   on(event, handler) {
-    if (SocketShimV2.EVENT_MAP.has(event)) {
-      for (const v2Event of SocketShimV2.EVENT_MAP.get(event)) {
-        this._on(v2Event, handler)
-      }
-    } else {
-      this._on(event, handler)
+    let set = this._listeners.get(event)
+    if (!set) {
+      set = new Set()
+      this._listeners.set(event, set)
     }
-  }
-
-  _removeListener(event, handler) {
-    // Keep track of our event listeners.
-    // We move them to a new socket in ._replaceSocketWithNewInstance()
-    if (this._events.has(event)) {
-      const listeners = this._events.get(event)
-      const pos = listeners.indexOf(handler)
-      if (pos !== -1) {
-        listeners.splice(pos, 1)
-      }
-    }
-    this._socket.removeListener(event, handler)
+    set.add(handler)
   }
 
   removeListener(event, handler) {
-    if (SocketShimV2.EVENT_MAP.has(event)) {
-      for (const v2Event of SocketShimV2.EVENT_MAP.get(event)) {
-        this._removeListener(v2Event, handler)
+    const set = this._listeners.get(event)
+    if (set) set.delete(handler)
+  }
+
+  // Offline-only helper: fire all registered handlers for `event`. Called by
+  // sync-mutation / upload-success glue to simulate server push messages.
+  _simulate(event, ...args) {
+    const set = this._listeners.get(event)
+    if (!set) return
+    for (const handler of set) {
+      try {
+        handler(...args)
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`SocketShimNoop handler for ${event} threw:`, e)
       }
-    } else {
-      this._removeListener(event, handler)
-    }
-  }
-
-  static createNewSocket(url, options) {
-    // open a brand new connection for the default namespace '/'
-    // The old socket can still leak 'disconnect' events from the teardown
-    //  of the old transport. The leaking 'disconnect' events interfere with
-    //  the _new_ connection and cancel the new connect attempt.
-    // Also skip the caching in these locations:
-    // - `io.connect()` caches `io.Manager`s in `io.managers`
-    // - `io.Manager().socket()` caches `io.Socket`s in its `this.nsps`
-    return io.Manager(url, options).socket('/', options)
-  }
-
-  _replaceSocketWithNewInstance() {
-    const oldSocket = this._socket
-    const newSocket = SocketShimV2.createNewSocket(this._url, this._options)
-
-    // move our existing event handlers to the new socket
-    this._events.forEach((listeners, event) => {
-      for (const listener of listeners) {
-        oldSocket.removeListener(event, listener)
-        newSocket.on(event, listener)
-      }
-    })
-
-    if (oldSocket.connected) {
-      // We overwrite the reference to oldSocket soon.
-      // Make sure we are disconnected.
-      oldSocket.disconnect()
-    }
-    this._socket = newSocket
-  }
-
-  connect() {
-    // have the same logic behind socket.connect and socket.socket.connect
-    this._replaceSocketWithNewInstance()
-  }
-
-  constructor(url, options) {
-    super(SocketShimV2.createNewSocket(url, options))
-    this._url = url
-    this._options = options
-    this._events = new Map()
-
-    const self = this
-    function _getEngine() {
-      return (self._socket.io && self._socket.io.engine) || {}
-    }
-
-    this.socket = {
-      get connected() {
-        return self._socket.connected
-      },
-      get sessionid() {
-        if (self._socket.id) {
-          return self._socket.id
-        }
-        // socket.id is discarded upon disconnect
-        // the id is still available in the internal state
-        return _getEngine().id
-      },
-      get transport() {
-        return _getEngine().transport
-      },
-
-      connect() {
-        self._replaceSocketWithNewInstance()
-      },
-      disconnect(reason) {
-        return self._socket.disconnect(reason)
-      },
     }
   }
 }
 
-let current
-if (typeof io === 'undefined' || !io) {
-  debugConsole.log('[socket.io] Shim: socket.io is not loaded, returning noop')
-  current = SocketShimNoop
-} else if (typeof io.version === 'string' && io.version.slice(0, 1) === '0') {
-  debugConsole.log('[socket.io] Shim: detected v0')
-  current = SocketShimV0
-} else {
-  // socket.io v2 does not have a global io.version attribute.
-  debugConsole.log('[socket.io] Shim: detected v2')
-  current = SocketShimV2
-}
+// Offline build: `window.io` is set to `null` in main.tsx, so we always pick
+// the no-op shim. Upstream's v0/v2 socket.io shims have been stripped — see
+// git history if you need to re-introduce real socket transport.
+debugConsole.log('[socket.io] Shim: offline build, using noop')
+const current = SocketShimNoop
 
 export class SocketIOMock extends SocketShimBase {
   constructor() {
@@ -363,8 +185,6 @@ export class SocketIOMock extends SocketShimBase {
 
 export default {
   SocketShimNoop,
-  SocketShimV0,
-  SocketShimV2,
   current,
   connect: current.connect,
   stub: () => new SocketShimNoop(),
