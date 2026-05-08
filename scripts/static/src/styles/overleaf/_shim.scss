@@ -1,7 +1,0 @@
-// One last shim: `.full-size` is referenced by `@extend .full-size` from
-// vendored pdf.scss. Upstream defines it in pages/editor/ide.scss (which we
-// don't vendor). Keep this single class so the @extend resolves.
-.full-size {
-  width: 100%;
-  height: 100%;
-}

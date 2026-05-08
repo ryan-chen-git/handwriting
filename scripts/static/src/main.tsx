@@ -1,26 +1,27 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './infrastructure/i18n';
-import { PdfPreviewProvider } from './features/pdf-preview/components/pdf-preview-provider';
-import { ProjectProvider } from './shared/context/project-context';
-import { DetachCompileProvider } from './shared/context/detach-compile-context';
+// Entry point that boots upstream Overleaf's IDE page.
+//
+//   1. Set `window.io = null`. Upstream's connection-manager checks
+//      `typeof window.io !== 'object'` to decide whether socket.io loaded
+//      (a `<script>` tag injects the real one in production). JS quirk:
+//      `typeof null === 'object'`, so the check passes. The downstream
+//      `SocketIoShim` then sees `!io` and picks its built-in `SocketShimNoop`,
+//      a no-op shim — no real network connection is attempted.
+//   2. Load stylesheets so Bootstrap's variable-overrides + foundations
+//      apply before any component reads them.
+//   3. Load the page entry, which mounts <IdeRoot/> into #ide-root.
+(window as unknown as { io: unknown }).io = null;
 
-// Bootstrap is built from SCSS source inside styles/overleaf/index.scss
-// (via base/bootstrap.scss) with upstream's variable-overrides applied
-// BEFORE compilation. Don't add `bootstrap.min.css` back — it would
-// re-introduce Bootstrap's defaults and undo the variable-overrides.
-import './styles/overleaf/index.scss';
-import './styles/overrides.scss';
+// Offline build: seed doc contents keyed by doc_id. Our patched
+// SocketShimNoop replies to `joinDoc` with these lines so the editor mounts
+// real content instead of showing "no_selection_select_file".
+(window as unknown as { __seedDocLines: Record<string, string[]> }).__seedDocLines = {
+  main: [
+    '\\documentclass{article}',
+    '\\begin{document}',
+    'Hello, world.',
+    '\\end{document}',
+  ],
+};
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ProjectProvider>
-      <DetachCompileProvider>
-        <PdfPreviewProvider>
-          <App />
-        </PdfPreviewProvider>
-      </DetachCompileProvider>
-    </ProjectProvider>
-  </StrictMode>
-);
+import './stylesheets/main-style.scss';
+import './js/pages/ide';

@@ -1,0 +1,1 @@
+import{N as o,$ as a,f2 as i}from"./index-Co2Wk2ZC.js";import{b as s}from"./index-NptRarlq.js";const m=(r,n)=>{const t=new o;return[t.of([]),a.transactionExtender.of(f=>{for(const e of f.effects)if(e.is(i))return{effects:t.reconfigure(e.value?s(r,n):[])};return null})]};export{m as c};

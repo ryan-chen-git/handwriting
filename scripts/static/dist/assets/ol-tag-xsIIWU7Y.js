@@ -1,0 +1,1 @@
+import{i as s,r as o,j as t,b5 as e}from"./index-Co2Wk2ZC.js";function i(a,r){return a?(r==null&&(r="Do MMM YYYY, h:mm a"),s(a).format(r)):"N/A"}const n=o.forwardRef((a,r)=>t.jsx(e,{ref:r,...a}));n.displayName="OLTag";export{n as O,i as f};

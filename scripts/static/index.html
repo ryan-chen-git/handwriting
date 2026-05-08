@@ -3,16 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>handwriting-test · Overleaf</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
-    <!-- Material Symbols Rounded is self-hosted; @font-face in styles/overrides.scss points at /fonts/material-symbols/. We deliberately don't preload — the preload requires CORS headers that our local server doesn't send, which made the preloaded resource get rejected and the fallback kick in. Letting the @font-face fetch happen on demand from the same origin works without ceremony. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!--
+      Hardcoded ol-* meta tags (upstream's pug template normally injects these
+      from the server). getMeta() reads <meta name="ol-…"> and parses based on
+      data-type. Booleans: presence of `content=""` = true, absent = false.
+      JSON values are inlined.
+    -->
+    <meta name="ol-anonymous" data-type="boolean" />
+    <meta name="ol-isRestrictedTokenMember" data-type="boolean" />
+    <meta name="ol-gitBridgeEnabled" data-type="boolean" />
+    <meta name="ol-wikiEnabled" data-type="boolean" />
+    <meta name="ol-showSupport" data-type="boolean" />
+    <meta name="ol-showUpgradePrompt" data-type="boolean" />
+
+    <meta name="ol-baseAssetPath" content="/" />
+    <meta name="ol-wsUrl" content="ws://127.0.0.1:0/__nowhere__" />
+    <meta name="ol-loadingText" content="Loading…" />
+    <meta name="ol-maxDocLength" data-type="number" content="2000000" />
+
+    <meta name="ol-project_id" content="local" />
+    <meta name="ol-user_id" content="local-user" />
+
+    <meta name="ol-project" data-type="json" content='{"_id":"local","name":"handwriting-test","rootDoc_id":"main","owner":{"_id":"local-user","email":"local@local","first_name":"Local","last_name":"User"},"members":[],"invites":[],"features":{"versioning":false,"collaborators":-1,"compileGroup":"standard","compileTimeout":60,"trackChanges":false,"references":false,"templates":false,"dropbox":false,"github":false,"gitBridge":false,"mendeley":false,"zotero":false,"papers":false,"symbolPalette":true},"deletedDocs":[],"trackChangesState":{},"publicAccessLevel":"private","tokens":{},"editorThemes":[],"overallThemes":[],"rootFolder":[{"_id":"root","name":"rootFolder","folders":[],"fileRefs":[],"docs":[{"_id":"main","name":"main.tex"}]}],"compiler":"pdflatex","spellCheckLanguage":"en","imageName":""}' />
+
+    <meta name="ol-user" data-type="json" content='{"_id":"local-user","email":"local@local","first_name":"Local","last_name":"User","signUpDate":"2026-01-01T00:00:00.000Z","features":{"trackChanges":false,"references":false,"compileTimeout":60,"compileGroup":"standard"},"alphaProgram":false,"betaProgram":false,"isAdmin":false,"allowedFreeTrial":false}' />
+
+    <meta name="ol-capabilities" data-type="json" content='["chat","edit-content","comment","resolve-comment","track-changes-comment","view-content","view-pdf"]' />
+
+    <meta name="ol-ExposedSettings" data-type="json" content='{"appName":"Overleaf","adminEmail":"","hasLinkUrlFeature":false,"hasLinkedProjectFileFeature":false,"hasLinkedProjectOutputFileFeature":false,"hasLinkUrlsExceptionFeature":false,"hasAffiliationsFeature":false,"siteUrl":"","cookieDomain":"","statusPageUrl":"","emailConfirmationDisabled":true,"recaptchaSiteKey":"","recaptchaDisabled":{},"validRootDocExtensions":["tex","Rtex","ltx"],"fileIgnorePattern":"","sentryAllowedOriginRegex":"","sentryDsn":null,"sentryEnvironment":null,"sentryRelease":null,"hotjarId":null,"hotjarVersion":null,"editorThemes":[],"legacyEditorThemes":[],"shouldLoadHotjar":false,"templateLinks":[],"isOverleaf":true,"templates":{},"plansHomepageBaseUrl":"","saasOnly":false,"hasOnboarding":false,"hasManagedUsers":false,"hasGroupSubscriptionInviteFeature":false}' />
+
+    <meta name="ol-editorThemes" data-type="json" content='["textmate"]' />
+    <meta name="ol-legacyEditorThemes" data-type="json" content='[]' />
+    <meta name="ol-i18n" data-type="json" content='{"currentLangCode":"en"}' />
+    <meta name="ol-compileSettings" data-type="json" content='{"compileTimeout":60,"compileGroup":"standard"}' />
+    <meta name="ol-userSettings" data-type="json" content='{"editorTheme":"textmate","overallTheme":"","fontSize":12,"fontFamily":"monaco","lineHeight":"normal","mode":"default","mathPreview":true,"breadcrumbs":true,"autoComplete":true,"autoPairDelimiters":true,"nonBlinkingCursor":false,"syntaxValidation":true,"spellCheckLanguage":"en","pdfViewer":"pdfjs","referencesSearchMode":"simple","mendeley":{"migrated":true},"zotero":{"migrated":true},"papers":{"migrated":true}}' />
+    <meta name="ol-symbolPaletteAvailable" data-type="boolean" content="" />
+    <meta name="ol-useShareJsHash" data-type="boolean" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="ide-root" style="width:100vw;height:100vh"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
