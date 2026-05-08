@@ -493,3 +493,139 @@
   display: flex;
   gap: 20px;
 }
+
+// --- Handwriting PDF toolbar additions (ported from Overleaf) --------------
+// The toolbar splits left (Recompile / Logs / Download) and right (the
+// PdfViewerControlsToolbar portal). Class names below mirror the upstream
+// SCSS so future component ports drop in with matching styling.
+
+.pdf .toolbar.toolbar-pdf {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toolbar-pdf-left,
+.toolbar-pdf-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.toolbar-pdf-right {
+  padding-right: var(--spacing-02);
+  min-height: 24px; // reserve space before the portal mounts
+}
+
+// Dark-mode invert filter on the rendered PDF page (matches upstream).
+.pdf.pdf-dark-mode .pdfjs-viewer .page {
+  filter: invert(95%) hue-rotate(180deg) brightness(90%) contrast(90%);
+}
+
+// Theme/invert toggle: green pill when active.
+.btn.pdf-toolbar-btn.theme-toggle-btn {
+  border: none;
+  border-radius: 999px;
+
+  &.active {
+    color: var(--content-primary-dark);
+    background-color: var(--bg-accent-02);
+
+    &:hover {
+      background-color: var(--bg-accent-02);
+    }
+  }
+}
+
+// Hand-rolled dropdown for the zoom selector — Bootstrap's Dropdown
+// component isn't wired here; this matches the visual contract.
+.pdf-zoom-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  .pdfjs-zoom-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 200px;
+    padding: 4px 0;
+    margin: 0;
+    list-style: none;
+    background: var(--bg-primary-themed);
+    border: 1px solid var(--border-divider-themed);
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
+    color: var(--content-primary-themed);
+    font-size: 12px;
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 6px 12px;
+      background: transparent;
+      border: 0;
+      color: var(--content-primary-themed);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        background: var(--bg-secondary-themed);
+      }
+    }
+
+    .dropdown-divider {
+      margin: 4px 0;
+      border-top: 1px solid var(--border-divider-themed);
+    }
+
+    .dropdown-header {
+      padding: 6px 12px 2px;
+      color: var(--content-secondary-themed);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pdfjs-custom-zoom-menu-item {
+      padding: 4px 12px;
+
+      .form-control {
+        width: 100%;
+        height: 24px;
+        padding: 0 6px;
+        background: var(--bg-secondary-themed);
+        border: 1px solid var(--border-divider-themed);
+        border-radius: 3px;
+        color: var(--content-primary-themed);
+        font: inherit;
+
+        &:focus {
+          outline: 1px solid var(--bg-accent-02);
+        }
+      }
+    }
+
+    .shortcut {
+      display: inline-flex;
+      gap: 2px;
+      margin-left: 12px;
+      color: var(--content-secondary-themed);
+
+      kbd {
+        padding: 0 4px;
+        background: var(--bg-secondary-themed);
+        border: 1px solid var(--border-divider-themed);
+        border-radius: 3px;
+        font: inherit;
+        font-size: 10px;
+        line-height: 1.4;
+      }
+    }
+  }
+}

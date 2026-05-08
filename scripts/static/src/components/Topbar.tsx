@@ -6,7 +6,7 @@ type Props = {
 };
 
 const MS = (name: string) => (
-  <i className="material-symbols-outlined" aria-hidden>{name}</i>
+  <span className="material-symbols" aria-hidden translate="no">{name}</span>
 );
 
 type MenuName = 'File' | 'Edit' | 'View' | 'Help';
@@ -47,7 +47,7 @@ export default function Topbar({ projectName }: Props) {
                 style={{ backgroundImage: `url(${olLogoUrl})` }}
                 aria-label="Overleaf home"
               />
-              <i className="material-symbols-outlined toolbar-ol-home-button" aria-hidden>home</i>
+              <span className="material-symbols toolbar-ol-home-button" aria-hidden translate="no">home</span>
             </a>
           </div>
         </div>
@@ -55,9 +55,14 @@ export default function Topbar({ projectName }: Props) {
         <nav className="ide-redesign-toolbar-menu" ref={navRef}>
           {(Object.keys(MENU_ITEMS) as MenuName[]).map((name) => (
             <div className="ide-redesign-toolbar-menu-item" key={name}>
+              {/* Mirrors upstream <MenuBarDropdown>: <DropdownToggle variant="secondary"
+                  className="ide-redesign-toolbar-dropdown-toggle-subdued
+                             ide-redesign-toolbar-button-subdued menu-bar-toggle">.
+                  Sizing (28px tall / 14px font / 4px radius) comes from those
+                  three classes in vendored toolbar-redesign.scss + menu-bar.scss. */}
               <button
                 type="button"
-                className={`ide-redesign-toolbar-button-subdued${openMenu === name ? ' active' : ''}`}
+                className={`btn btn-secondary dropdown-toggle ide-redesign-toolbar-dropdown-toggle-subdued ide-redesign-toolbar-button-subdued menu-bar-toggle${openMenu === name ? ' active show' : ''}`}
                 aria-haspopup="menu"
                 aria-expanded={openMenu === name}
                 onClick={() => setOpenMenu((v) => (v === name ? null : name))}
@@ -85,9 +90,50 @@ export default function Topbar({ projectName }: Props) {
         </nav>
       </div>
       <div className="ide-redesign-toolbar-actions">
-        <button className="ide-redesign-toolbar-button-subdued">{MS('history')} History</button>
-        <button className="ide-redesign-toolbar-button-subdued">{MS('view_quilt')} Layout</button>
-        <button className="ide-redesign-toolbar-button-subdued ide-redesign-toolbar-button-primary">{MS('share')} Share</button>
+        {/* Upstream <OLIconButton icon="history" className="ide-redesign-toolbar-button-subdued ide-redesign-toolbar-button-icon">
+            renders: <button class="btn btn-{variant} icon-button [...]">
+                       <span class="button-content">
+                         <span class="material-symbols icon-small">history</span>
+                       </span>
+                     </button> */}
+        <div className="ide-redesign-toolbar-button-container">
+          <button
+            type="button"
+            className="btn btn-secondary icon-button ide-redesign-toolbar-button-subdued ide-redesign-toolbar-button-icon"
+            aria-label="History"
+            title="History"
+          >
+            <span className="button-content">
+              <span className="material-symbols icon-small" aria-hidden translate="no">history</span>
+            </span>
+          </button>
+        </div>
+        {/* Upstream Layout: <DropdownToggle> with ide-redesign-toolbar-button-subdued
+            + ide-redesign-toolbar-dropdown-toggle-subdued + ide-redesign-toolbar-button-icon. */}
+        <div className="ide-redesign-toolbar-button-container">
+          <button
+            type="button"
+            className="btn btn-secondary icon-button ide-redesign-toolbar-button-subdued ide-redesign-toolbar-dropdown-toggle-subdued ide-redesign-toolbar-button-icon"
+            aria-label="Layout options"
+            title="Layout"
+          >
+            <span className="button-content">
+              <span className="material-symbols icon-small unfilled" aria-hidden translate="no">space_dashboard</span>
+            </span>
+          </button>
+        </div>
+        {/* Upstream Share: <OLButton size="sm" variant="primary" leadingIcon=...> */}
+        <div className="ide-redesign-toolbar-button-container">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+          >
+            <span className="button-content">
+              {MS('person_add')}
+              <span>Share</span>
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );

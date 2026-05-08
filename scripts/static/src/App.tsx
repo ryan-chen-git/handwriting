@@ -9,6 +9,7 @@ import ClonedPdfViewer from './components/ClonedPdfViewer';
 import LogsPanel from './components/LogsPanel';
 import SplitDivider from './components/SplitDivider';
 import type { TestPreset } from './lib/test-presets';
+import { useDetachCompileContext } from './shared/context/detach-compile-context';
 
 // Seed used only if `/default_template` fails (server unreachable). No
 // font code here — the backend strips and re-injects font-selection
@@ -45,6 +46,8 @@ export default function App() {
 
   const [activeRail, setActiveRail] = useState<RailKey | null>(null);
   const [pdfSize, setPdfSize] = useState<number | undefined>(undefined);
+
+  const { darkModePdf } = useDetachCompileContext();
 
   const prevPdfUrlRef = useRef<string | null>(null);
   const splitRef = useRef<HTMLDivElement>(null);
@@ -172,7 +175,7 @@ export default function App() {
 
           <SplitDivider onDrag={handleDividerDrag} />
 
-          <section className="ide-redesign-pdf-container">
+          <section className={`ide-redesign-pdf-container pdf${darkModePdf ? ' pdf-dark-mode' : ''}`}>
             <PdfToolbar
               compiling={compiling}
               errorCount={errors.length}

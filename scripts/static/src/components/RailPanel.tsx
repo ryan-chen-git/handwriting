@@ -24,7 +24,7 @@ const TITLES: Record<RailKey, string> = {
 };
 
 const MS = (name: string) => (
-  <i className="material-symbols-outlined" aria-hidden>{name}</i>
+  <span className="material-symbols" aria-hidden translate="no">{name}</span>
 );
 
 type OutlineNode = { level: number; title: string; line: number };
@@ -109,7 +109,7 @@ export default function RailPanel({
                       onOpenPreset(p);
                     }}
                   >
-                    {MS('science')}
+                    {MS('integration_instructions')}
                     <span>{p.label}</span>
                   </a>
                 </li>

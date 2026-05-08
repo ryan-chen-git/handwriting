@@ -1,15 +1,25 @@
 // Overleaf vendored stylesheets, dark-only.
-// Using @import (legacy) so the shim's mixins are visible in every
-// downstream file without having to edit Overleaf's sources.
+//
+// `base/bootstrap` is the entry point: it imports Bootstrap functions,
+// then our foundations + abstracts (which rewrite Bootstrap's $sass
+// variables), then the rest of Bootstrap source. After this @import,
+// every .btn / .dropdown / utility class is built from upstream tokens.
+//
+// `_shim.scss` only provides a couple of mixins that the vendored
+// page-level SCSS subset still references but that don't live in
+// upstream's mixins.scss (e.g., the legacy `theme()` shim used by an
+// older variant of one file). Keep it small and additive.
 
+@import 'base/bootstrap';
 @import 'shim';
-@import 'themed-tokens';
-@import 'foundations/colors';
-@import 'foundations/spacing';
-@import 'foundations/border-radius';
-@import 'foundations/typography';
+
+// Component-level vendored subset
+@import 'components/menu-bar';
+
+// Page-level vendored subset
 @import 'pages/editor/toolbar';
 @import 'pages/editor/toolbar-redesign';
+@import 'pages/editor/ide';
 @import 'pages/editor/ide-redesign';
 @import 'pages/editor/rail';
 @import 'pages/editor/pdf';

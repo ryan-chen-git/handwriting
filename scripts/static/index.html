@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>handwriting-test · Overleaf</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
-    <!-- Material Symbols Outlined — Overleaf's icon font. The opsz/wght/FILL/GRAD axes match their default 20px outlined glyphs. -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <!-- Material Symbols Rounded is self-hosted; @font-face in styles/overrides.scss points at /fonts/material-symbols/. We deliberately don't preload — the preload requires CORS headers that our local server doesn't send, which made the preloaded resource get rejected and the fallback kick in. Letting the @font-face fetch happen on demand from the same origin works without ceremony. -->
+
   </head>
   <body>
     <div id="root"></div>

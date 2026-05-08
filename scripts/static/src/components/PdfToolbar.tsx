@@ -11,7 +11,7 @@ type Props = {
 };
 
 const MS = (name: string) => (
-  <i className="material-symbols-outlined" aria-hidden>{name}</i>
+  <span className="material-symbols" aria-hidden translate="no">{name}</span>
 );
 
 export default function PdfToolbar({
@@ -30,7 +30,9 @@ export default function PdfToolbar({
     const onDown = (e: MouseEvent) => {
       if (!compileRef.current?.contains(e.target as Node)) setCompileMenuOpen(false);
     };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setCompileMenuOpen(false); };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCompileMenuOpen(false);
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onEsc);
     return () => {
@@ -41,26 +43,34 @@ export default function PdfToolbar({
 
   return (
     <div className="pdf">
-      <div className="toolbar toolbar-pdf">
+      <div
+        aria-label="PDF"
+        role="toolbar"
+        className="toolbar toolbar-pdf toolbar-pdf-hybrid btn-toolbar"
+      >
+        {/* --- Left: Recompile / Logs / Download --- */}
         <div className="toolbar-pdf-left">
-          <div className="btn-group compile-button-group" ref={compileRef}>
+          <div
+            role="group"
+            className="compile-button-group dropdown btn-group"
+            ref={compileRef}
+          >
             <button
               type="button"
-              className="btn btn-primary compile-button"
+              className="d-inline-grid align-items-center py-0 no-left-radius px-3 compile-button btn btn-primary"
               onClick={onCompile}
               disabled={compiling}
             >
-              {compiling
-                ? <span className="compile-spinner" aria-hidden />
-                : MS('refresh')}
-              <span className="button-content">Recompile</span>
+              {compiling && <span className="compile-spinner" aria-hidden />}
+              <span className="button-content" aria-hidden="false">Recompile</span>
             </button>
             <button
               type="button"
-              className="btn btn-primary compile-button-menu-toggle"
-              aria-label="Compile options"
+              id="pdf-recompile-dropdown"
+              aria-label="Toggle compile options menu"
               aria-haspopup="menu"
               aria-expanded={compileMenuOpen}
+              className="custom-toggle no-left-border dropdown-button-toggle compile-dropdown-toggle dropdown-toggle dropdown-toggle-split btn btn-primary btn-sm"
               onClick={() => setCompileMenuOpen((v) => !v)}
             >
               {MS('expand_more')}
@@ -94,27 +104,41 @@ export default function PdfToolbar({
 
           <button
             type="button"
-            className={`btn pdf-toolbar-btn log-btn${logsOpen ? ' active' : ''}${errorCount > 0 ? ' has-errors' : ''}`}
+            className={`d-inline-grid pdf-toolbar-btn toolbar-item log-btn btn btn-link${logsOpen ? ' active' : ''}${errorCount > 0 ? ' has-errors' : ''}`}
             onClick={onToggleLogs}
             aria-pressed={logsOpen}
-            title="Logs and output files"
+            aria-label="View logs"
+            style={{ position: 'relative' }}
           >
-            {MS('description')}
-            <span className="button-content">Logs</span>
-            {errorCount > 0 && <span className="badge bg-danger">{errorCount}</span>}
+            <span className="button-content" aria-hidden="false">
+              {MS('description')}
+              {errorCount > 0 && <span className="badge bg-danger">{errorCount}</span>}
+            </span>
           </button>
 
           {pdfUrl && (
             <a
-              className="btn pdf-toolbar-btn"
+              className="d-inline-grid pdf-toolbar-btn btn btn-link"
               href={pdfUrl}
               download="output.pdf"
-              title="Download PDF"
+              draggable={false}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Download PDF"
+              style={{ pointerEvents: 'auto' }}
             >
-              {MS('download')}
-              <span className="button-content">Download</span>
+              <span className="button-content" aria-hidden="false">
+                {MS('download')}
+              </span>
             </a>
           )}
+        </div>
+
+        {/* --- Right: portal target. PdfViewerControlsToolbar (rendered
+            from inside PdfJsViewer) createPortal's into the inner
+            #toolbar-pdf-controls div, matching upstream's nesting. --- */}
+        <div className="toolbar-pdf-right">
+          <div id="toolbar-pdf-controls" className="toolbar-pdf-controls" />
         </div>
       </div>
     </div>

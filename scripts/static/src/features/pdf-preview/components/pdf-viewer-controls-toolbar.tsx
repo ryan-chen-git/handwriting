@@ -1,9 +1,20 @@
-// Stub of upstream's pdf-viewer-controls-toolbar. The real toolbar pulls in a
-// dozen more components (page-number-control, zoom-buttons, zoom-dropdown,
-// theme-button, menu-button, etc.) that all depend on Overleaf's layout /
-// command / split-test contexts. We render our own PdfToolbar outside the
-// PdfJsViewer, so this file is an inert placeholder that just satisfies the
-// import.
+import { memo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PdfHybridThemeButton } from './pdf-hybrid-theme-button';
+import PdfPageNumberControl from './pdf-page-number-control';
+import PdfZoomButtons from './pdf-zoom-buttons';
+import PdfZoomDropdown from './pdf-zoom-dropdown';
+
+// Port of Overleaf's PdfViewerControlsToolbar. Renders into the
+// `#toolbar-pdf-controls` slot defined by the outer PdfToolbar via
+// React portal, so the controls component lives near the PDF state
+// (here, inside PdfJsViewer) but appears in the right side of the
+// main toolbar row.
+//
+// We omit upstream's responsive small-mode (PdfViewerControlsToolbarSmall),
+// the resize observer, and the keyboard-command provider — easy to add
+// later if needed; the user said "trim after, don't worry about adding
+// too much functionality."
 
 type Props = {
   requestPresentationMode: () => void;
@@ -15,8 +26,52 @@ type Props = {
   pdfContainer?: HTMLDivElement;
 };
 
-function PdfViewerControlsToolbar(_props: Props) {
-  return null;
+function PdfViewerControlsToolbar({
+  requestPresentationMode,
+  setZoom,
+  rawScale,
+  setPage,
+  page,
+  totalPages,
+}: Props) {
+  // Wait for the portal target to mount. Re-checks on every render until
+  // it appears; `portalNode` becomes a stable element once present.
+  const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (portalNode) return;
+    const tick = () => {
+      const el = document.getElementById('toolbar-pdf-controls');
+      if (el) setPortalNode(el);
+    };
+    tick();
+    if (!portalNode) {
+      const id = window.setTimeout(tick, 0);
+      return () => window.clearTimeout(id);
+    }
+  });
+
+  if (!portalNode) return null;
+
+  return createPortal(
+    <div className="pdfjs-viewer-controls">
+      <PdfHybridThemeButton />
+      <PdfPageNumberControl
+        setPage={setPage}
+        page={page}
+        totalPages={totalPages}
+      />
+      <div className="pdfjs-zoom-controls">
+        <PdfZoomButtons setZoom={setZoom} />
+        <PdfZoomDropdown
+          requestPresentationMode={requestPresentationMode}
+          rawScale={rawScale}
+          setZoom={setZoom}
+        />
+      </div>
+    </div>,
+    portalNode,
+  );
 }
 
-export default PdfViewerControlsToolbar;
+export default memo(PdfViewerControlsToolbar);

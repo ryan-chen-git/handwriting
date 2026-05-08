@@ -12,9 +12,9 @@ export type RailKey =
 const ITEMS: Item[] = [
   { key: 'files', label: 'File tree', icon: 'description' },
   { key: 'search', label: 'Project search', icon: 'search' },
-  // The "integrations" slot is repurposed as a list of canned compile
-  // tests — no real integrations exist in this build.
-  { key: 'tests', label: 'Test presets', icon: 'science' },
+  // Upstream's "integrations" rail slot — we repurpose it as canned compile
+  // presets. Icon name matches upstream so the slice woff2 picks it up.
+  { key: 'tests', label: 'Test presets', icon: 'integration_instructions' },
   { key: 'review', label: 'Review', icon: 'rate_review' },
   { key: 'chat', label: 'Chat', icon: 'forum' },
 ];
@@ -29,40 +29,57 @@ type Props = {
   onSelect: (key: RailKey) => void;
 };
 
+// Each rail tab = upstream's <RailTab>: a single button with class
+// `ide-rail-tab-link` + `open-rail` when its panel is open. The icon span
+// gets `material-symbols ide-rail-tab-link-icon`, plus `unfilled` when the
+// tab isn't active (swaps to the outlined font slice).
 function Tab({ item, active, onSelect }: { item: Item; active: boolean; onSelect: () => void }) {
   return (
-    <li>
-      <button
-        type="button"
-        className={`ide-rail-tab-button${active ? ' active' : ''}`}
-        title={item.label}
-        aria-label={item.label}
-        aria-pressed={active}
-        onClick={onSelect}
+    <button
+      type="button"
+      className={`btn ide-rail-tab-link${active ? ' open-rail' : ''}`}
+      role="tab"
+      aria-selected={active}
+      aria-label={item.label}
+      title={item.label}
+      onClick={onSelect}
+    >
+      <span
+        className={`material-symbols${active ? '' : ' unfilled'} ide-rail-tab-link-icon`}
+        aria-hidden
+        translate="no"
       >
-        <span className="ide-rail-tab-link">
-          <i className="material-symbols-outlined ide-rail-tab-link-icon" aria-hidden>
-            {item.icon}
-          </i>
-        </span>
-      </button>
-    </li>
+        {item.icon}
+      </span>
+    </button>
   );
 }
 
 export default function LeftRail({ active, onSelect }: Props) {
   return (
-    <aside className="ide-rail" aria-label="Tools">
-      <ul className="ide-rail-tabs-nav">
-        {ITEMS.map((it) => (
-          <Tab key={it.key} item={it} active={active === it.key} onSelect={() => onSelect(it.key)} />
-        ))}
-      </ul>
-      <ul className="ide-rail-tabs-nav">
-        {BOTTOM.map((it) => (
-          <Tab key={it.key} item={it} active={active === it.key} onSelect={() => onSelect(it.key)} />
-        ))}
-      </ul>
-    </aside>
+    <nav className="ide-rail" aria-label="Sidebar">
+      <div className="ide-rail-tabs-nav" role="tablist">
+        <div className="ide-rail-tabs-wrapper">
+          {ITEMS.map((it) => (
+            <Tab
+              key={it.key}
+              item={it}
+              active={active === it.key}
+              onSelect={() => onSelect(it.key)}
+            />
+          ))}
+        </div>
+        <nav aria-label="Help and settings">
+          {BOTTOM.map((it) => (
+            <Tab
+              key={it.key}
+              item={it}
+              active={active === it.key}
+              onSelect={() => onSelect(it.key)}
+            />
+          ))}
+        </nav>
+      </div>
+    </nav>
   );
 }

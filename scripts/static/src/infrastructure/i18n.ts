@@ -20,6 +20,21 @@ i18n.use(initReactI18next).init({
         linked_file: 'Linked file',
         back_to_your_projects: 'Back to your projects',
         overleaf_logo: 'Overleaf',
+
+        // PDF toolbar
+        previous_page: 'Previous page',
+        next_page: 'Next page',
+        page_current: 'Page {{page}}',
+        zoom_in: 'Zoom in',
+        zoom_out: 'Zoom out',
+        fit_to_width: 'Fit to width',
+        fit_to_height: 'Fit to height',
+        zoom_to: 'Zoom to',
+        pdf_zoom_level: 'Zoom level',
+        presentation_mode: 'Presentation mode',
+        showing_pdf_preview_with_inverted_colors:
+          'Showing PDF preview with inverted colors',
+        invert_pdf_preview_colors: 'Invert PDF preview colors',
       },
     },
   },

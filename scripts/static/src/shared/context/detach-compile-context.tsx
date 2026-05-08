@@ -1,18 +1,15 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
 } from 'react';
 
-// Subset of Overleaf's DetachCompileContext used by the vendored pdf-js-viewer.
-// We only implement the handful of state slots the viewer actually reads/writes:
-// setError, firstRenderDone, highlights, position, setPosition.
-//
-// The full upstream context bag is much larger (compile state, auto-compile
-// settings, SyncTeX, file list, etc.) — we don't need any of that here because
-// compilation is driven by our App.tsx already.
+// Subset of Overleaf's DetachCompileContext used by the vendored pdf-js-viewer
+// and the PDF toolbar.
 
 export type PdfHighlight = {
   page: number;
@@ -44,9 +41,17 @@ type DetachCompileContextValue = {
   highlights: PdfHighlight[] | undefined;
   position: PdfPosition | undefined;
   setPosition: (pos: PdfPosition | undefined) => void;
+
+  // Mirrors Overleaf's dark-mode PDF preview flag. When true, an inversion
+  // filter is applied to the rendered PDF page (CSS-driven via a class
+  // on a wrapper). Persisted in localStorage.
+  darkModePdf: boolean;
+  setDarkModePdf: (next: boolean) => void;
 };
 
 const noop = () => {};
+
+const DARK_MODE_KEY = 'pdf:darkMode';
 
 const DetachCompileContext = createContext<DetachCompileContextValue>({
   setError: noop,
@@ -54,12 +59,34 @@ const DetachCompileContext = createContext<DetachCompileContextValue>({
   highlights: undefined,
   position: undefined,
   setPosition: noop,
+  darkModePdf: false,
+  setDarkModePdf: noop,
 });
 
 export const useDetachCompileContext = () => useContext(DetachCompileContext);
 
 export const DetachCompileProvider = ({ children }: PropsWithChildren) => {
   const [position, setPosition] = useState<PdfPosition | undefined>(undefined);
+
+  const [darkModePdf, setDarkModePdfState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(DARK_MODE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const setDarkModePdf = useCallback((next: boolean) => {
+    setDarkModePdfState(next);
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DARK_MODE_KEY, darkModePdf ? '1' : '0');
+    } catch {
+      // ignore quota / availability errors
+    }
+  }, [darkModePdf]);
 
   const value = useMemo<DetachCompileContextValue>(
     () => ({
@@ -68,8 +95,10 @@ export const DetachCompileProvider = ({ children }: PropsWithChildren) => {
       highlights: undefined,
       position,
       setPosition,
+      darkModePdf,
+      setDarkModePdf,
     }),
-    [position],
+    [position, darkModePdf, setDarkModePdf],
   );
 
   return (

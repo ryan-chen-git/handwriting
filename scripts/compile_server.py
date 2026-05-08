@@ -501,10 +501,17 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/default_template":
             self._json(200, {"latex": DEFAULT_TEMPLATE})
             return
-        # Serve Vite build assets (anything under /assets/, plus root files like
-        # favicon.ico). Constrain to dist/ to avoid path traversal.
-        if self.path.startswith("/assets/") or self.path in (
-            "/favicon.ico", "/favicon.svg", "/robots.txt", "/manifest.webmanifest",
+        # Serve Vite build assets (Vite output under /assets/, plus files
+        # copied verbatim from public/ which land at the dist root —
+        # /fonts/, /img/ — plus a few standard root files). Constrain
+        # everything to dist/ to avoid path traversal.
+        if (
+            self.path.startswith("/assets/")
+            or self.path.startswith("/fonts/")
+            or self.path.startswith("/img/")
+            or self.path in (
+                "/favicon.ico", "/favicon.svg", "/robots.txt", "/manifest.webmanifest",
+            )
         ):
             rel = self.path.lstrip("/")
             target = (STATIC_DIR / "dist" / rel).resolve()

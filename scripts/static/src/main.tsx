@@ -6,9 +6,10 @@ import { PdfPreviewProvider } from './features/pdf-preview/components/pdf-previe
 import { ProjectProvider } from './shared/context/project-context';
 import { DetachCompileProvider } from './shared/context/detach-compile-context';
 
-// Order matters: Bootstrap first (provides --bs-* vars + .btn base styles),
-// then vendored Overleaf SCSS (consumes those vars), then our overrides.
-import 'bootstrap/dist/css/bootstrap.min.css';
+// Bootstrap is built from SCSS source inside styles/overleaf/index.scss
+// (via base/bootstrap.scss) with upstream's variable-overrides applied
+// BEFORE compilation. Don't add `bootstrap.min.css` back — it would
+// re-introduce Bootstrap's defaults and undo the variable-overrides.
 import './styles/overleaf/index.scss';
 import './styles/overrides.scss';
 

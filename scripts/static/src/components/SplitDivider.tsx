@@ -39,9 +39,11 @@ export default function SplitDivider({ onDrag }: Props) {
     };
   }, [dragging, onDrag]);
 
+  // Class list matches upstream's <HorizontalResizeHandle>: drag dots come
+  // from `::before`/`::after` pseudo-elements styled in vendored ide.scss.
   return (
     <div
-      className={`split-divider${dragging ? ' dragging' : ''}${hover ? ' hover' : ''}`}
+      className="horizontal-resize-handle horizontal-resize-handle-enabled"
       onPointerDown={(e) => {
         e.preventDefault();
         setDragging(true);
@@ -49,14 +51,11 @@ export default function SplitDivider({ onDrag }: Props) {
       }}
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
-      onDoubleClick={() => {
-        // double-click resets to 50/50 — let parent infer via sentinel negative value? simpler: emit center of viewport
-        onDrag(window.innerWidth / 2);
-      }}
+      onDoubleClick={() => onDrag(window.innerWidth / 2)}
       role="separator"
       aria-orientation="vertical"
-    >
-      <span className="split-divider-line" />
-    </div>
+      data-dragging={dragging || undefined}
+      data-hover={hover || undefined}
+    />
   );
 }

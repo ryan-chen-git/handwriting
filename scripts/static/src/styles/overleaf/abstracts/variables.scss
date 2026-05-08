@@ -1,8 +1,14 @@
-// Stub of Overleaf's abstracts/variables.scss — only the bits referenced by
-// the editor stylesheets we vendor.
-
-$header-height: 40px;
+// Header
+$header-height: 68px;
 $toolbar-height: 40px;
 $toolbar-small-height: 32px;
+
+// Footer
 $thin-footer-height: 50px;
-$themes: ('default');
+$fat-footer-content-height: calc(100vh - $header-height);
+$thin-footer-content-height: calc(
+  100vh - ($header-height + $thin-footer-height)
+);
+
+// List of allowed themes
+$themes: ('default', 'light');

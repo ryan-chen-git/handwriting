@@ -5,7 +5,40 @@
 * { box-sizing: border-box; }
 
 // =============================================================================
-// Global reset — Bootstrap sets light bg by default; force dark across the app
+// Self-hosted Noto Sans — upstream's body font. Verbatim port of upstream's
+// $font-family-sans-serif: 'Noto Sans'. Files in public/fonts/noto-sans/ were
+// copied from /tmp/overleaf-ref/services/web/frontend/fonts/noto-sans/.
+// =============================================================================
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: fallback;
+  src: url('/fonts/noto-sans/NotoSans-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: fallback;
+  src: url('/fonts/noto-sans/NotoSans-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: fallback;
+  src: url('/fonts/noto-sans/NotoSans-SemiBold.woff2') format('woff2');
+}
+
+// =============================================================================
+// Global reset. Bootstrap's reboot already sets `body { font-family:
+// var(--bs-body-font-family) }`, and our variable-overrides resolve that
+// through `$font-family-sans-serif: 'Noto Sans'`. So we only need to force
+// dark bg/color and dial in the layout shell here — DON'T re-declare
+// font-family or --bs-body-font-family. (Doing so was a previous source of
+// drift between this app and upstream Overleaf.)
 // =============================================================================
 
 html, body, #root {
@@ -15,21 +48,64 @@ html, body, #root {
   overflow: hidden;
   background: var(--bg-dark-primary);
   color: var(--content-primary-dark);
-  font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
 input { color: inherit; font-family: inherit; }
 
-// Material Symbols default sizing — match Overleaf (20px in rail/toolbar)
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+// Self-host upstream's Material Symbols Rounded font (verbatim copy of
+// fonts/material-symbols/material-symbols.css). The Slice woff2 was rebuilt
+// from Google's CDN with our specific icon list (see public/fonts/material-symbols/).
+// Vite copies them to /fonts/material-symbols/ at the dist root.
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/material-symbols/MaterialSymbolsRoundedSlice.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/material-symbols/MaterialSymbolsRoundedUnfilledPartialSlice.woff2') format('woff2');
+}
+
+// Real Overleaf's icon class — verbatim port of their
+// fonts/material-symbols/material-symbols.css. They use `material-symbols`
+// (singular) with the Rounded font + FILL=1; `.unfilled` modifier swaps in
+// the Outlined font.
+.material-symbols {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
   font-size: 20px;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 20;
   line-height: 1;
-  vertical-align: middle;
-  user-select: none;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+
+  &.size-2x { font-size: 2em; }
+  &.rotate-180 { transform: rotate(180deg); }
+  &.unfilled {
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 20;
+  }
 }
 
 // =============================================================================
@@ -78,77 +154,11 @@ input { color: inherit; font-family: inherit; }
 // Top bar — fill in pieces Overleaf's stylesheet expects but our markup omits
 // =============================================================================
 
-.ide-redesign-toolbar {
-  align-items: center;
-}
-
-.ide-redesign-toolbar-menu-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-04);
-  flex: 0 0 auto;
-}
-
-.ide-redesign-toolbar-logos {
-  display: flex;
-  align-items: center;
-}
-
-.ide-redesign-toolbar-home-button {
-  width: 32px;
-  height: 32px;
-}
-
-.ide-redesign-toolbar-home-link {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--green-50);
-  text-decoration: none;
-  color: #fff;
-  position: relative;
-
-  .toolbar-ol-logo {
-    display: block;
-    width: 18px;
-    height: 18px;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-  }
-
-  .toolbar-ol-home-button {
-    display: none;
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    font-size: 18px;
-    color: #fff;
-  }
-
-  &:hover {
-    background: var(--green-60);
-    .toolbar-ol-logo { display: none; }
-    .toolbar-ol-home-button { display: flex; align-items: center; justify-content: center; }
-  }
-}
-
-.ide-redesign-toolbar-project-name {
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--content-primary-dark);
-  align-self: center;
-  white-space: nowrap;
-}
-
-.ide-redesign-toolbar-menu {
-  display: flex;
-  align-items: center;
-  margin-left: 4px;
-}
+// All toolbar layout/buttons (`.ide-redesign-toolbar`,
+// `.ide-redesign-toolbar-button-subdued`, `.ide-redesign-toolbar-home-link`,
+// `.ide-redesign-toolbar-menu-bar`, etc.) come from vendored
+// `pages/editor/toolbar-redesign.scss`. We only keep things that don't
+// exist upstream because we use a custom dropdown (no react-bootstrap):
 
 .ide-redesign-toolbar-menu-item {
   position: relative;
@@ -159,11 +169,11 @@ input { color: inherit; font-family: inherit; }
   top: calc(100% + 4px);
   left: 0;
   min-width: 200px;
-  background: var(--bg-dark-secondary, #2f3a4c);
+  background: var(--bg-dark-secondary);
   border: 1px solid var(--border-divider-dark);
-  border-radius: 6px;
+  border-radius: var(--border-radius-base);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  padding: 4px;
+  padding: var(--spacing-02);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -172,117 +182,29 @@ input { color: inherit; font-family: inherit; }
 .ide-redesign-toolbar-dropdown-item {
   display: flex;
   align-items: center;
-  padding: 6px 10px;
+  padding: var(--spacing-03) var(--spacing-04);
   border: 0;
   background: transparent;
   color: var(--content-primary-dark);
-  font-size: 13px;
+  font-size: var(--font-size-02);
   text-align: left;
-  border-radius: 4px;
+  border-radius: var(--border-radius-base);
   cursor: pointer;
 
-  &:hover:not(:disabled) { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
+  &:hover:not(:disabled) { background: var(--bg-dark-tertiary); }
   &:disabled { opacity: 0.45; cursor: default; }
 }
 
-.ide-redesign-toolbar-button-subdued.active {
-  background: var(--bg-dark-secondary);
-  color: var(--content-primary-dark);
-}
-
-.ide-redesign-toolbar-button-primary {
-  background: var(--green-50);
-  color: #fff;
-  &:hover { background: var(--green-60); color: #fff; }
-}
-
-.ide-redesign-toolbar-button-subdued {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  align-self: center;
-  border: 0;
-  background: transparent;
-  color: var(--content-primary-dark);
-
-  &:hover {
-    background: var(--bg-dark-secondary);
-    color: var(--content-primary-dark);
-  }
-
-  .material-symbols-outlined { font-size: 18px; }
-}
-
-.ide-redesign-toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-01);
-}
+// (Share button is now `btn btn-primary btn-sm`; Bootstrap+variable-overrides
+// styles the green pill via $primary = $bg-accent-01. No local rule needed.)
 
 // =============================================================================
-// Left rail — center icons inside the 32×32 link slot. Overleaf's rule sets
-// `line-height: 32px` on the icon span, which works for font glyphs.
+// Left rail — `.ide-rail`, `.ide-rail-tabs-nav`, `.ide-rail-tabs-wrapper`,
+// `.ide-rail-tab-link`, `.ide-rail-tab-link-icon`, `.open-rail` are all
+// styled by vendored `pages/editor/rail.scss`. The `flex: 1` on
+// `.ide-rail-tabs-wrapper` is what pushes the bottom <nav> (Help/Settings)
+// to the bottom of the 40px column. No overrides needed here.
 // =============================================================================
-
-.ide-rail {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.ide-rail-tabs-nav {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ide-rail-tab-button {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: block;
-  margin: 0 auto;
-}
-
-.ide-rail-tab-link-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 20px;
-}
-
-.ide-rail-tab-button {
-  background: transparent;
-  border: 0;
-  color: var(--content-secondary-dark);
-  cursor: pointer;
-  border-radius: 4px;
-  &:hover { background: var(--bg-dark-secondary); color: var(--content-primary-dark); }
-  &.active {
-    background: var(--bg-dark-secondary);
-    color: var(--content-primary-dark);
-    position: relative;
-    &::before {
-      content: '';
-      position: absolute;
-      left: -4px;
-      top: 4px;
-      bottom: 4px;
-      width: 2px;
-      background: var(--green-50);
-      border-radius: 2px;
-    }
-  }
-}
 
 // =============================================================================
 // Secondary rail panel (opens between rail and editor)
@@ -329,7 +251,7 @@ input { color: inherit; font-family: inherit; }
   border-radius: 4px;
   cursor: pointer;
   &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); color: var(--content-primary-dark); }
-  .material-symbols-outlined { font-size: 16px; }
+  .material-symbols { font-size: 16px; }
 }
 
 .ide-rail-panel-body {
@@ -373,7 +295,7 @@ input { color: inherit; font-family: inherit; }
   color: var(--content-secondary-dark);
   opacity: 0.7;
   text-align: center;
-  .material-symbols-outlined { font-size: 28px; opacity: 0.6; }
+  .material-symbols { font-size: 28px; opacity: 0.6; }
   p { margin: 0; font-size: 12px; }
 }
 
@@ -402,7 +324,7 @@ input { color: inherit; font-family: inherit; }
     gap: 8px;
     width: 100%;
   }
-  .material-symbols-outlined { font-size: 16px; color: var(--content-secondary-dark); }
+  .material-symbols { font-size: 16px; color: var(--content-secondary-dark); }
   &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
   &.active { background: rgba(9, 136, 66, 0.2); }
 }
@@ -479,6 +401,8 @@ input { color: inherit; font-family: inherit; }
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  height: var(--toolbar-small-height); // = 32px (matches upstream's @include toolbar-sm-height)
+  padding: 0 var(--spacing-03) 0 0;
   border: 0;
 }
 
@@ -487,7 +411,7 @@ input { color: inherit; font-family: inherit; }
   align-items: center;
   gap: 5px;
   height: 24px;
-  padding: 0 8px;
+  padding: 0 var(--spacing-01);
   font-size: 12px;
   line-height: 1;
   border: 0;
@@ -503,7 +427,7 @@ input { color: inherit; font-family: inherit; }
   &:focus, &:focus-visible { outline: none; box-shadow: none; }
   &:disabled { opacity: 0.4; }
 
-  .material-symbols-outlined { font-size: 16px; }
+  // Upstream's base .material-symbols rule is 20px; don't shrink here.
   .button-content { line-height: 1; }
 }
 
@@ -522,13 +446,13 @@ input { color: inherit; font-family: inherit; }
   position: relative;
 }
 
-.btn.btn-primary.compile-button-menu-toggle {
+// Class name matches upstream so the .toolbar-pdf-left .dropdown >
+// .compile-dropdown-toggle rule (width: 26px, padding: 2px) applies.
+.btn.btn-primary.compile-dropdown-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 24px;
-  width: 22px;
-  padding: 0;
   background: var(--green-50);
   color: #fff;
   border: 0;
@@ -544,7 +468,9 @@ input { color: inherit; font-family: inherit; }
     box-shadow: none;
     outline: none;
   }
-  .material-symbols-outlined { font-size: 16px; }
+  // Bootstrap's .dropdown-toggle::after caret is suppressed by the
+  // .custom-toggle class (upstream pattern).
+  &::after { content: none !important; }
 }
 
 .btn-group.compile-button-group .btn.btn-primary.compile-button {
@@ -592,7 +518,7 @@ input { color: inherit; font-family: inherit; }
 
   &:hover:not(:disabled) { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
   &:disabled { opacity: 0.45; cursor: default; }
-  .material-symbols-outlined { font-size: 16px; }
+  .material-symbols { font-size: 16px; }
   span { flex: 1; }
 }
 
@@ -601,14 +527,16 @@ input { color: inherit; font-family: inherit; }
   align-items: center;
   gap: 6px;
   height: 24px;
-  padding: 0 12px;
+  // Upstream applies px-3 (= 1rem = 16px) and font-size --font-size-02 (14px)
+  // via .toolbar-pdf-left .dropdown > .compile-button.
+  padding: 0 16px;
   background: var(--green-50);
   color: #fff;
   border: 0;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--font-size-02);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.5;
 
   &:hover:not(:disabled),
   &:active:not(:disabled),
@@ -620,7 +548,7 @@ input { color: inherit; font-family: inherit; }
   }
   &:disabled { background: var(--green-50); color: #fff; opacity: 0.7; }
 
-  .material-symbols-outlined { font-size: 14px; }
+  .material-symbols { font-size: 14px; }
   .button-content { line-height: 1; }
 }
 
@@ -635,120 +563,11 @@ input { color: inherit; font-family: inherit; }
 }
 @keyframes compile-spin { to { transform: rotate(360deg); } }
 
-// Page input + zoom label — small inputs that match Overleaf's pdf footer
-.pdfjs-page-number-input {
-  width: 36px;
-  height: 24px;
-  text-align: center;
-  font-size: 12px;
-  border: 1px solid var(--border-divider-dark);
-  border-radius: 4px;
-  background: #1f2733;
-  color: var(--content-primary-dark);
-  font-family: inherit;
-
-  &:focus { outline: none; border-color: var(--green-50); }
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-}
-
-.pdfjs-page-count {
-  font-size: 12px;
-  color: var(--content-secondary-dark);
-  margin: 0 4px 0 2px;
-  opacity: 0.7;
-}
-
-.pdfjs-zoom-menu {
-  position: relative;
-  display: inline-flex;
-}
-
-.pdfjs-zoom-label {
-  min-width: 72px;
-  height: 24px;
-  padding: 0 4px 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--content-primary-dark);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  &:hover { background: var(--pdf-toolbar-btn-hover-color); }
-}
-
-.pdfjs-zoom-caret { font-size: 16px; line-height: 1; }
-
-.pdfjs-zoom-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  min-width: 140px;
-  background: var(--bg-dark-secondary, #2f3a4c);
-  border: 1px solid var(--border-divider-dark);
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  padding: 4px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-}
-
-.pdfjs-zoom-dropdown-item {
-  display: flex;
-  padding: 6px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--content-primary-dark);
-  font-size: 13px;
-  text-align: left;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover { background: var(--bg-dark-tertiary, rgba(255,255,255,0.06)); }
-}
-
-.pdf-toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--border-divider-dark);
-  margin: 0 4px;
-}
-
 // Bootstrap badge override — sit slightly above the baseline
 .btn .badge {
   margin-left: 4px;
   font-size: 10px;
   padding: 2px 5px;
-}
-
-// =============================================================================
-// Material Symbols — Overleaf uses the variable "Material Symbols" font via
-// `.material-symbols`. The Google Font we load is "Material Symbols Outlined"
-// so we alias both class names to the same font here.
-// =============================================================================
-
-.material-symbols,
-.material-symbols-rounded {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-  user-select: none;
 }
 
 // =============================================================================
@@ -790,37 +609,17 @@ input { color: inherit; font-family: inherit; }
 }
 
 // =============================================================================
-// Split divider
+// Split divider — class is `horizontal-resize-handle horizontal-resize-handle-enabled`
+// matching upstream's <HorizontalResizeHandle>. All visual styling
+// (background, drag-dot SVG pseudo-elements) lives in vendored ide.scss.
+// We only need the cursor + flex-shrink + touch-action here.
 // =============================================================================
 
-.split-divider {
-  position: relative;
-  width: 6px;
+.horizontal-resize-handle {
   cursor: col-resize;
-  background: var(--bg-dark-primary);
-  border-left: 1px solid var(--border-divider-dark);
-  border-right: 1px solid var(--border-divider-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
   flex-shrink: 0;
   touch-action: none;
-
-  &:hover, &.dragging { background: var(--bg-dark-secondary); }
-}
-.split-divider-line {
-  display: block;
-  width: 2px;
-  height: 24px;
-  background: var(--neutral-60);
-  border-radius: 2px;
-  opacity: 0.7;
-}
-.split-divider:hover .split-divider-line,
-.split-divider.dragging .split-divider-line {
-  opacity: 1;
-  background: var(--neutral-50);
+  user-select: none;
 }
 
 // =============================================================================
@@ -859,68 +658,6 @@ input { color: inherit; font-family: inherit; }
     pointer-events: none;
     opacity: 0.65;
   }
-}
-
-// =============================================================================
-// PDF.js canvas stack
-// =============================================================================
-
-// pdf.js's PDFViewer requires its container to be absolutely positioned, so
-// we wrap it in a relative-positioned flex item and pin the canvas container
-// to fill that wrapper.
-.pdf-viewer-host {
-  flex: 1 1 auto;
-  min-height: 0;
-  position: relative;
-  background: var(--bg-dark-secondary);
-  overflow: hidden;
-}
-
-.pdf-viewer-canvases {
-  position: absolute;
-  inset: 0;
-  background: var(--bg-dark-secondary);
-  overflow: auto;
-
-  &::-webkit-scrollbar { width: 12px; height: 12px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: #4a5364;
-    border: 3px solid var(--bg-dark-secondary);
-    border-radius: 8px;
-  }
-  &::-webkit-scrollbar-thumb:hover { background: #5a6478; }
-}
-
-.pdf-viewer-pages {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  min-height: 100%;
-}
-
-.pdf-viewer-page {
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.32);
-  border-radius: 1px;
-  overflow: hidden;
-  display: block;
-
-  canvas { display: block; }
-}
-
-.pdf-viewer-empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--content-secondary-dark);
-  font-size: 13px;
-  pointer-events: none;
-  opacity: 0.65;
 }
 
 // =============================================================================
