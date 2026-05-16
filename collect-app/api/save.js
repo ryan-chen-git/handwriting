@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { char, sample_idx, strokes, tag, canvas } = req.body;
+    const { char, sample_idx, strokes, tag, canvas, size } = req.body;
 
     if (!char || strokes === undefined) {
       return res.status(400).json({ error: 'Missing char or strokes' });
@@ -31,6 +31,12 @@ export default async function handler(req, res) {
       safeName = `${tag}_${safeName}`;
     }
 
+    // Stretchy-delimiter samples carry a size index so each (char, size) pair
+    // has its own filename namespace.
+    if (size != null) {
+      safeName = `${safeName}_s${String(size).padStart(2, '0')}`;
+    }
+
     const sourceId = `${safeName}_${String(sample_idx).padStart(3, '0')}`;
     const filename = `samples/${sourceId}.json`;
 
@@ -39,6 +45,7 @@ export default async function handler(req, res) {
       strokes,
       source_id: sourceId,
       tag: tag || null,
+      size: size != null ? size : null,
       canvas: canvas || null,
       timestamp: Date.now(),
     };

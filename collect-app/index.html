@@ -42,10 +42,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  html, body {
-    height: 100vh;
-    height: 100dvh;
-  }
+  html, body { height: 100vh; height: 100dvh; }
 
   body {
     font-family: var(--font-ui);
@@ -62,20 +59,19 @@
 
   /* ─────────────── Header ─────────────── */
   .header {
-    padding: 14px 24px;
+    padding: 0;
     background: var(--surface);
     border-bottom: 1px solid var(--hairline);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
     flex-shrink: 0;
+    height: 52px;
   }
-  .brand {
+  .header-left {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    cursor: pointer;
-    user-select: none;
+    align-items: center;
+    gap: 14px;
   }
   .brand-mark {
     font-family: var(--font-display);
@@ -83,29 +79,51 @@
     font-size: 22px;
     letter-spacing: -0.01em;
     line-height: 1;
+    user-select: none;
   }
-  .brand-divider {
-    width: 1px;
-    height: 14px;
-    background: var(--hairline-strong);
-  }
-  .brand-sub {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
+  .sidebar-toggle {
+    background: transparent;
+    border: none;
     color: var(--muted);
+    padding: 0 16px;
+    cursor: pointer;
+    min-width: auto;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    transition: color 0.15s var(--ease), background 0.15s var(--ease);
+  }
+  .sidebar-toggle:hover { color: var(--ink); background: var(--surface-2); }
+
+  .tabs {
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--font-ui);
     font-weight: 500;
+    min-width: 0;
+    border-radius: 0;
+    transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
   }
-  .progress-text {
-    font-size: 12px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--cerulean-deep);
+    border-bottom-color: var(--cerulean);
   }
-  .progress-text strong {
-    color: var(--ink);
-    font-weight: 600;
-  }
+
+  body.left-handed .header { justify-content: flex-end; }
+  body.left-handed .header-left { flex-direction: row-reverse; }
 
   .progress-bar-container {
     height: 1px;
@@ -119,74 +137,206 @@
     transition: width 0.5s var(--ease);
   }
 
-  /* ─────────────── Instruction area ─────────────── */
-  .instruction-area {
-    padding: 24px 20px 16px;
-    text-align: center;
-    flex-shrink: 0;
-    background: var(--bg);
-  }
-  .category-label {
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    margin-bottom: 10px;
-    font-weight: 500;
-  }
-  .char-display {
-    font-family: var(--font-handwriting);
-    font-weight: 400;
-    font-size: 96px;
-    line-height: 1.45;
-    min-height: 1.45em;
-    padding-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--ink);
-    letter-spacing: 0.01em;
-  }
-  .char-label {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 8px;
-    letter-spacing: 0.01em;
-  }
-  .char-label .char-quoted {
-    font-family: var(--font-handwriting);
-    color: var(--ink);
-    font-size: 1.15em;
-  }
-  .sample-dots {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    margin-top: 14px;
-    flex-wrap: wrap;
-  }
-  .sample-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--hairline-strong);
-    transition: background 0.2s var(--ease), transform 0.2s var(--ease);
-  }
-  .sample-dot.done { background: var(--ink); }
-  .sample-dot.current {
-    background: transparent;
-    box-shadow: inset 0 0 0 1.5px var(--ink);
-    transform: scale(1.2);
-  }
-
-  /* ─────────────── Main stage (info | canvas | reference) ─────────────── */
-  .main-stage {
+  /* ─────────────── App shell (sidebar | main) ─────────────── */
+  .app {
     flex: 1;
     display: flex;
+    flex-direction: row;
+    min-height: 0;
+  }
+  .app.left-handed { flex-direction: row-reverse; }
+  .app.no-sidebar .sidebar { display: none; }
+
+  /* ─────────────── Sidebar ─────────────── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-right: 1px solid var(--hairline);
+    overflow: hidden;
+  }
+  .app.left-handed .sidebar {
+    border-right: none;
+    border-left: 1px solid var(--hairline);
+  }
+  .sidebar-header {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 20px 16px;
-    gap: 24px;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--hairline);
+    flex-shrink: 0;
+  }
+  body.left-handed .sidebar-header { flex-direction: row-reverse; }
+  .sidebar-title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--cerulean-deep);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    user-select: none;
+  }
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0 10px;
+  }
+  .sidebar-body::-webkit-scrollbar { width: 6px; }
+  .sidebar-body::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 3px; }
+
+  .cat-section { display: flex; flex-direction: column; }
+  .cat-header {
+    background: transparent;
+    border: none;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    border-radius: 0;
+    transition: background 0.12s var(--ease);
+    min-width: 0;
+    font-family: var(--font-ui);
+  }
+  .cat-header:hover { background: var(--surface-2); }
+  .cat-header:has(+ .cat-body) {
+    color: var(--cerulean-deep);
+  }
+  .cat-header:has(+ .cat-body) .cat-chevron {
+    color: var(--cerulean);
+  }
+  .cat-chevron {
+    font-size: 9px;
+    color: var(--muted);
+    width: 10px;
+    flex-shrink: 0;
+    transition: transform 0.15s var(--ease);
+    display: inline-block;
+  }
+  .cat-name {
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cat-coverage {
+    color: var(--subtle);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .cat-body {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0 4px;
+  }
+  .char-row {
+    background: transparent;
+    border: none;
+    padding: 6px 14px 6px 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    border-radius: 0;
+    min-width: 0;
+    font-family: var(--font-ui);
+    transition: background 0.12s var(--ease);
+  }
+  .char-row:hover { background: var(--surface-2); }
+  .char-row.current {
+    background: var(--cerulean-soft);
+    color: var(--ink);
+  }
+  .char-row-glyph {
+    font-family: var(--font-handwriting);
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 18px;
+  }
+  .char-row-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .char-row.current .char-row-name { color: var(--ink-soft); }
+  .char-row-count {
+    color: var(--subtle);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .char-row.current .char-row-count { color: var(--ink-soft); }
+
+  .delim-row .cat-chevron {
+    font-size: 8px;
+    color: var(--muted);
+    transition: transform 0.15s var(--ease);
+    margin-right: -2px;
+  }
+  .char-row.current-parent { background: var(--surface-2); }
+
+  .size-row {
+    background: transparent;
+    border: none;
+    padding: 5px 14px 5px 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    border-radius: 0;
+    min-width: 0;
+    font-family: var(--font-ui);
+    transition: background 0.12s var(--ease);
+  }
+  .size-row:hover { background: var(--surface-2); }
+  .size-row.current {
+    background: var(--cerulean-soft);
+    color: var(--ink);
+  }
+  .size-row-label {
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* ─────────────── Main column ─────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+  }
+
+  .main-stage {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    overflow-y: auto;
     min-height: 0;
   }
   .info-col {
@@ -195,34 +345,56 @@
     align-items: flex-start;
     gap: 10px;
     flex-shrink: 0;
-    width: 200px;
-    max-width: 200px;
+    width: 320px;
+    max-width: 320px;
   }
-  .info-col .category-label {
-    margin-bottom: 0;
-    text-align: left;
-  }
-  .info-col .char-display {
+  .info-col.delim-mode .char-name,
+  .info-col.delim-mode .char-count { display: none; }
+  .canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 10px;
     align-self: stretch;
-    width: 100%;
-    justify-content: center;
-    font-size: 110px;
-    border: 1px solid var(--hairline-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    padding: 14px 16px 22px;
-    box-shadow: 0 1px 0 var(--hairline-strong), 0 12px 28px -20px rgba(10,10,10,0.08);
-    line-height: 1.3;
-    min-height: auto;
   }
-  .info-col .char-label {
+  .category-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 500;
     text-align: left;
-    margin-top: 0;
   }
-  .info-col .sample-dots {
-    justify-content: flex-start;
-    margin-top: 4px;
+  .char-display {
+    /* Explicit dimensions and styling that match canvas#canvas exactly. */
+    width: 320px;
+    height: 160px;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 0 var(--hairline-strong), 0 8px 24px -16px rgba(10,10,10,0.08);
+    font-family: var(--font-handwriting);
+    font-weight: 400;
+    font-size: 90px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
   }
+  .char-name {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: left;
+  }
+  .char-count {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
+
   .canvas-col {
     display: flex;
     flex-direction: row;
@@ -238,53 +410,17 @@
     width: 320px;
     height: 160px;
   }
-  /* .canvas-col .controls inherits the default vertical column layout */
-
-  /* ─── Right-of-canvas: samples-per-char selector ─── */
-  .canvas-side {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    width: 88px;
-  }
-  .canvas-side-label {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--muted);
-    font-weight: 500;
-    text-align: center;
-    line-height: 1.4;
-  }
-  .canvas-side .samples-select {
-    font-family: var(--font-ui);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 28px 10px 14px;
+  canvas#referenceCanvas {
+    background: var(--surface);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline-strong);
-    background: var(--surface);
-    color: var(--ink);
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
     width: 100%;
-    text-align: center;
-    text-align-last: center;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%230A0A0A' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    height: 160px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 0 var(--hairline-strong), 0 12px 28px -20px rgba(10,10,10,0.08);
   }
-  .canvas-side .samples-select:hover { border-color: var(--cerulean); }
-  .canvas-side .samples-select:focus {
-    outline: none;
-    border-color: var(--cerulean);
-    box-shadow: 0 0 0 3px var(--cerulean-soft);
-  }
+  canvas#referenceCanvas[hidden] { display: none; }
+  .char-display[hidden] { display: none; }
   .controls {
     display: flex;
     flex-direction: column;
@@ -315,386 +451,208 @@
     font-weight: 600;
   }
   .btn-accept:not(:disabled):hover { background: #1A1A1A; }
-
   .btn-clear {
     background: transparent;
     border-color: var(--hairline-strong);
     color: var(--muted);
   }
   .btn-clear:not(:disabled):hover { color: var(--ink); border-color: var(--ink); }
-
-  .btn-undo, .btn-skip {
+  .btn-undo, .btn-next {
     background: var(--surface);
     color: var(--ink-soft);
   }
-
-  /* ─────────────── Char strip ─────────────── */
-  .char-strip-wrap {
-    flex-shrink: 0;
-    background: var(--bg);
-    border-top: 1px solid var(--hairline);
-    border-bottom: 1px solid var(--hairline);
-  }
-  .char-strip {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 4px;
-    padding: 12px 16px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-  .char-strip::-webkit-scrollbar { display: none; }
-  .char-chip {
-    min-width: 56px;
-    height: 56px;
-    flex-shrink: 0;
-    padding: 0 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--hairline);
-    cursor: pointer;
-    font-family: var(--font-handwriting);
-    font-weight: 400;
-    font-size: 28px;
-    background: var(--surface);
+  .btn-reference {
+    background: transparent;
+    border: 1px solid var(--hairline-strong);
     color: var(--ink-soft);
-    scroll-snap-align: center;
-    transition: all 0.15s var(--ease);
+    font-size: 12px;
+    padding: 9px 14px;
+    margin-top: 4px;
   }
-  .char-chip:active { transform: scale(0.94); }
-  .char-chip.current {
-    background: var(--cerulean);
-    color: var(--surface);
-    border-color: var(--cerulean);
-    box-shadow: 0 0 0 3px var(--cerulean-soft);
+  .btn-reference:hover {
+    border-color: var(--ink);
+    color: var(--ink);
   }
-  .char-chip.done {
-    background: var(--surface);
-    color: var(--subtle);
-    border-color: var(--hairline);
-    position: relative;
-  }
-  .char-chip.done::after {
-    content: '';
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--ink);
-  }
+  .btn-reference[hidden] { display: none; }
 
-  /* ─────────────── Status pill ─────────────── */
-  .status-bar-wrap {
-    flex-shrink: 0;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    background: var(--bg);
-  }
-  .status-bar {
-    padding: 6px 14px;
-    background: var(--surface);
-    border: 1px solid var(--hairline);
-    color: var(--muted);
-    font-size: 11px;
-    border-radius: 100px;
-    letter-spacing: 0.02em;
-    font-weight: 500;
-    transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .status-bar::before {
-    content: '';
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--subtle);
-    transition: background 0.2s var(--ease);
-  }
-  .status-bar.saving { color: var(--ink); }
-  .status-bar.saving::before { background: var(--warn); animation: pulse 1.2s ease-in-out infinite; }
-  .status-bar.saved { color: var(--ink); border-color: var(--cerulean); }
-  .status-bar.saved::before { background: var(--cerulean); }
-  .status-bar.error { color: var(--error); border-color: var(--error); }
-  .status-bar.error::before { background: var(--error); }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  /* ─────────────── Overlay (category picker) ─────────────── */
-  .overlay {
+  /* ─────────────── Tab views ─────────────── */
+  .view {
+    flex: 1;
     display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(10,10,10,0.32);
-    z-index: 100;
-    justify-content: center;
-    align-items: flex-end;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    animation: fadeIn 0.25s var(--ease);
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
-  .overlay.show { display: flex; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
+  .main.tab-guide .view-guide { display: flex; }
+  .main.tab-collection .view-collection { display: flex; }
+  .main.tab-manager .view-manager { display: flex; }
+  .main.tab-settings .view-settings { display: flex; }
 
-  .overlay-content {
-    background: var(--bg);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    padding: 28px 28px 32px;
-    width: 100%;
-    max-width: 720px;
-    max-height: 86vh;
+  /* ── Guide ── */
+  .guide-body {
+    flex: 1;
     overflow-y: auto;
-    animation: slideUp 0.32s var(--ease);
-    box-shadow: 0 -8px 40px -12px rgba(10,10,10,0.18);
+    padding: 32px 48px 64px;
+    max-width: 780px;
+    width: 100%;
+    margin: 0;
+    text-align: left;
   }
-  .overlay-header {
+  .guide-heading {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 22px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
   }
-  .overlay-content h2 {
+  .guide-title {
     font-family: var(--font-display);
     font-weight: 300;
-    font-size: 28px;
+    font-size: 32px;
     letter-spacing: -0.01em;
-  }
-  .icon-btn {
-    background: transparent;
-    border: none;
-    font-size: 24px;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 4px 10px;
     line-height: 1;
-    min-width: auto;
-    border-radius: var(--radius-sm);
   }
-  .icon-btn:hover { color: var(--ink); background: var(--hairline); }
-
-  .cat-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .guide-subtitle {
+    color: var(--warn);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
-  .cat-btn {
-    padding: 16px 18px;
-    background: var(--surface);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
+  .guide-section {
+    margin-bottom: 32px;
+  }
+  .guide-section-title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 8px;
+  }
+  .guide-section p {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .guide-tier {
     font-family: var(--font-ui);
+    font-weight: 600;
     font-size: 14px;
-    text-align: left;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.15s var(--ease);
-    min-width: 0;
     color: var(--ink);
+    margin-top: 18px;
+    margin-bottom: 4px;
   }
-  .cat-btn:hover { border-color: var(--ink); }
-  .cat-btn:active { background: var(--surface-2); }
-  .cat-btn-name {
-    font-weight: 500;
-    color: var(--ink);
-  }
-  .cat-btn-chars {
-    color: var(--subtle);
-    font-size: 14px;
-    margin-left: 8px;
-    font-family: var(--font-handwriting);
-    font-weight: 400;
-  }
-  .cat-progress {
-    color: var(--muted);
+  .guide-tier-note {
     font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-    margin-left: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-style: italic;
   }
-  .cat-btn.cat-complete {
-    background: var(--ink);
-    color: var(--surface);
-    border-color: var(--ink);
+  .guide-list {
+    list-style: disc;
+    margin-left: 22px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-soft);
   }
-  .cat-btn.cat-complete .cat-btn-name,
-  .cat-btn.cat-complete .cat-btn-chars,
-  .cat-btn.cat-complete .cat-progress {
-    color: var(--surface);
-    opacity: 0.85;
+  .guide-list li { margin-bottom: 4px; }
+  .guide-list code,
+  .guide-section code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
   }
-  .cat-btn.cat-complete .cat-btn-name { opacity: 1; }
 
-  .overlay-section {
-    margin-top: 24px;
-    padding-top: 22px;
-    border-top: 1px solid var(--hairline);
+  /* ── Settings ── */
+  .settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 48px 64px;
+    max-width: 780px;
+    width: 100%;
+    margin: 0;
   }
-  .overlay-section-label {
-    font-size: 10px;
+  .settings-title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    margin-bottom: 28px;
+  }
+  .settings-section { margin-bottom: 32px; }
+  .settings-section-title {
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.16em;
     color: var(--muted);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .settings-row-label {
+    font-size: 14px;
+    color: var(--ink);
     font-weight: 500;
   }
-  .samples-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .settings-row-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
   }
-  .samples-row label {
-    font-size: 13px;
-    color: var(--ink-soft);
+  .settings-row button { flex-shrink: 0; }
+  .btn-destructive {
+    color: var(--error);
   }
-  select#samplesPerChar {
-    font-family: var(--font-ui);
-    font-size: 13px;
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline-strong);
-    background: var(--surface);
-    color: var(--ink);
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%230A0A0A' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 28px;
-  }
-  .export-btns {
-    display: flex;
-    gap: 6px;
-    margin-top: 14px;
-  }
-  .export-btns button {
-    flex: 1;
-    font-size: 13px;
-    padding: 12px 10px;
-  }
-  .footer-note {
-    margin-top: 18px;
-    font-size: 11px;
-    color: var(--subtle);
-    text-align: center;
-    line-height: 1.5;
+  .btn-destructive:hover {
+    border-color: var(--error);
+    background: #FEF2F2;
   }
 
-  /* ─────────────── Manager + detail ─────────────── */
-  .manager-overlay,
-  .sample-detail {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    z-index: 200;
-    flex-direction: column;
-    animation: fadeIn 0.2s var(--ease);
-  }
-  .manager-overlay.show,
-  .sample-detail.show { display: flex; }
-  .sample-detail { z-index: 300; }
-
-  .manager-header,
-  .detail-header {
-    padding: 16px 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--hairline);
+  .manager-header {
+    padding: 18px 24px 14px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
+    gap: 16px;
     flex-shrink: 0;
+    border-bottom: 1px solid var(--hairline);
   }
-  .manager-header h2,
-  .detail-header h2 {
+  .manager-header h2 {
     font-family: var(--font-display);
     font-weight: 300;
     font-size: 22px;
     letter-spacing: -0.01em;
   }
-
-  .manager-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
-
-  .manager-char-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-    gap: 6px;
-    margin-bottom: 22px;
-  }
-  .manager-char-cell {
-    aspect-ratio: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline);
-    cursor: pointer;
-    font-family: var(--font-handwriting);
-    font-weight: 400;
-    font-size: 24px;
-    color: var(--ink-soft);
-    position: relative;
-    transition: all 0.12s var(--ease);
-  }
-  .manager-char-cell:hover { border-color: var(--ink); }
-  .manager-char-cell:active { background: var(--surface-2); }
-  .manager-char-cell.has-samples {
-    background: var(--ink);
-    color: var(--surface);
-    border-color: var(--ink);
-  }
-  .manager-char-cell .cell-count {
-    font-family: var(--font-ui);
-    font-size: 9px;
-    position: absolute;
-    bottom: 4px;
+  .manager-count {
+    font-size: 13px;
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
-    opacity: 0.7;
-    font-weight: 500;
   }
-
-  .manager-cat-label {
-    font-size: 10px;
-    font-weight: 500;
+  .manager-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+  }
+  .manage-empty {
+    text-align: center;
     color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    margin: 22px 0 10px 2px;
+    padding: 48px;
+    font-size: 13px;
   }
-  .manager-cat-label:first-child { margin-top: 0; }
+  .manage-empty.error { color: var(--error); }
 
-  .nav-btn {
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 4px 10px;
-    line-height: 1;
-    min-width: auto;
-    border-radius: var(--radius-sm);
-  }
-  .nav-btn:hover { color: var(--ink); background: var(--hairline); }
-
-  .detail-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
   .sample-card {
     background: var(--surface);
     border: 1px solid var(--hairline);
@@ -738,167 +696,267 @@
     min-width: auto;
   }
   .btn-delete-sample:hover { border-color: var(--error); }
-  .btn-add-sample {
-    background: var(--ink);
-    color: var(--surface);
-    border-color: var(--ink);
-    padding: 14px 24px;
-    font-size: 14px;
-    width: 100%;
-    margin-top: 14px;
+
+  /* ─────────────── Status pill ─────────────── */
+  .status-bar-wrap {
+    flex-shrink: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    background: var(--bg);
   }
-  .detail-canvas-area {
-    display: none;
+  .status-bar {
+    padding: 6px 14px;
     background: var(--surface);
     border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 18px;
-    margin-top: 12px;
-    flex-direction: column;
+    color: var(--muted);
+    font-size: 11px;
+    border-radius: 100px;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+    display: inline-flex;
     align-items: center;
-    gap: 14px;
+    gap: 6px;
   }
-  .detail-canvas-area.show { display: flex; }
-  .detail-controls { display: flex; gap: 8px; }
+  .status-bar::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--subtle);
+    transition: background 0.2s var(--ease);
+  }
+  .status-bar.saving { color: var(--ink); }
+  .status-bar.saving::before { background: var(--warn); animation: pulse 1.2s ease-in-out infinite; }
+  .status-bar.saved { color: var(--ink); border-color: var(--cerulean); }
+  .status-bar.saved::before { background: var(--cerulean); }
+  .status-bar.error { color: var(--error); border-color: var(--error); }
+  .status-bar.error::before { background: var(--error); }
 
-  /* ─────────────── iPad portrait tuning ─────────────── */
-  @media (min-width: 900px) {
-    .info-col .char-display { font-size: 130px; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ─────────────── Responsive ─────────────── */
+  @media (min-width: 1100px) {
     canvas#canvas { width: 380px; height: 190px; }
-    .header { padding: 18px 32px; }
-    .info-col { width: 220px; max-width: 220px; }
-    .reference-col { width: 240px; max-width: 240px; }
-    .reference-canvas { width: 220px; height: 110px; }
+    .info-col { width: 380px; max-width: 380px; }
+    .info-col .char-display { width: 380px; height: 190px; font-size: 110px; }
   }
-
-  /* ─── Stack vertically on narrow screens ─── */
   @media (max-width: 760px) {
-    .main-stage {
-      flex-direction: column;
-      gap: 14px;
-      padding: 14px 12px;
-    }
-    .info-col {
-      width: 100%;
-      max-width: 100%;
-      align-items: center;
-    }
-    .info-col .category-label,
-    .info-col .char-label { text-align: center; }
-    .info-col .char-display {
-      justify-content: center;
-      font-size: 84px;
-    }
-    .info-col .sample-dots { justify-content: center; }
-    .canvas-col { flex-direction: column; }
+    .sidebar { width: 180px; }
+    .info-col { width: 280px; max-width: 280px; }
+    .info-col .char-display { width: 280px; height: 140px; font-size: 80px; }
+    canvas#canvas { width: 280px; height: 140px; }
+    .main-stage { gap: 12px; padding: 14px 10px 8px; }
+    button { padding: 10px 14px; min-width: 84px; font-size: 12px; }
   }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="brand" id="titleBtn">
-    <span class="brand-mark">Handwriting</span>
-    <span class="brand-divider"></span>
-    <span class="brand-sub">Collection</span>
+  <div class="header-left">
+    <button class="sidebar-toggle" id="btnSidebarToggle" aria-label="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+        <line x1="9" y1="4" x2="9" y2="20"></line>
+      </svg>
+    </button>
+    <span class="brand-mark">Handwriting Collector</span>
+    <div class="tabs">
+      <button class="tab active" id="tabGuide" data-tab="guide">Guide</button>
+      <button class="tab" id="tabCollection" data-tab="collection">Collection</button>
+      <button class="tab" id="tabManager" data-tab="manager">Manager</button>
+      <button class="tab" id="tabSettings" data-tab="settings">Settings</button>
+    </div>
   </div>
-  <span class="progress-text" id="progressText">Loading…</span>
 </div>
 <div class="progress-bar-container">
   <div class="progress-bar" id="progressBar" style="width: 0%"></div>
 </div>
 
-<div class="main-stage">
-  <div class="info-col">
-    <div class="category-label" id="categoryLabel">—</div>
-    <div class="char-display" id="charDisplay">—</div>
-    <div class="char-label" id="charLabel">—</div>
-    <div class="sample-dots" id="sampleDots"></div>
-  </div>
-
-  <div class="canvas-col">
-    <div class="controls">
-      <button class="btn-accept" id="btnAccept" disabled>Accept</button>
-      <button class="btn-undo" id="btnUndo" disabled>Undo</button>
-      <button class="btn-clear" id="btnClear" disabled>Clear</button>
-      <button class="btn-skip" id="btnSkip">Skip</button>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Characters</span>
     </div>
-    <canvas id="canvas"></canvas>
-    <div class="canvas-side">
-      <span class="canvas-side-label">Samples<br>per char</span>
-      <select id="samplesPerChar" class="samples-select" aria-label="Samples per character">
-        <option value="1" selected>1</option>
-        <option value="3">3</option>
-        <option value="5">5</option>
-        <option value="10">10</option>
-        <option value="15">15</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-      </select>
-    </div>
-  </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+  </aside>
 
-</div>
+  <main class="main tab-guide">
+    <div class="view view-guide">
+      <div class="guide-body" id="guideBody">
+        <div class="guide-heading">
+          <h1 class="guide-title">Guide</h1>
+          <span class="guide-subtitle">Important — please read</span>
+        </div>
 
-<div class="char-strip-wrap">
-  <div id="charStrip" class="char-strip"></div>
-</div>
+        <section class="guide-section">
+          <h2 class="guide-section-title">The tabs at the top</h2>
+          <ul class="guide-list">
+            <li><strong>Guide</strong>: this page. Always available for reference.</li>
+            <li><strong>Collection</strong>: the drawing screen. The big handwritten character is your target. Draw it in the canvas, then hit <em>Accept</em> to save.</li>
+            <li><strong>Manager</strong>: view and delete samples you've already collected for the current character.</li>
+            <li><strong>Settings</strong>: switch between right-handed and left-handed layout, download all samples as JSON, or reset everything.</li>
+          </ul>
+        </section>
 
-<div class="status-bar-wrap">
-  <div class="status-bar" id="statusBar">Connecting…</div>
-</div>
+        <section class="guide-section">
+          <h2 class="guide-section-title">Picking a character (the sidebar)</h2>
+          <p>The sidebar on the left (titled <em>Characters</em>) is how you choose what to collect.</p>
+          <ul class="guide-list">
+            <li>Tap a category name to expand it. The chevron rotates to indicate open or closed.</li>
+            <li>Tap a character to make it the current target. It shows up as the big handwritten letter on the Collection tab.</li>
+            <li>The number next to a character is how many samples you've drawn for it. The number next to a category (e.g. <code>7/26</code>) is how many of its characters you've started.</li>
+            <li>The icon at the top-left of the page hides or shows the sidebar. The sidebar flips to the right when you switch to left-handed mode in Settings.</li>
+          </ul>
+        </section>
 
-<!-- Category Picker Overlay -->
-<div class="overlay" id="overlay">
-  <div class="overlay-content">
-    <div class="overlay-header">
-      <h2>Pick a category</h2>
-      <button class="icon-btn" id="btnCloseOverlay">&times;</button>
-    </div>
-    <div class="cat-grid" id="catGrid"></div>
+        <section class="guide-section">
+          <h2 class="guide-section-title">Drawing controls</h2>
+          <ul class="guide-list">
+            <li><strong>Accept</strong>: save the current strokes as a sample.</li>
+            <li><strong>Undo</strong>: remove only the last stroke (not the whole drawing).</li>
+            <li><strong>Clear</strong>: wipe the canvas.</li>
+            <li><strong>Next</strong>: move to the next character in the current category. The site does not auto-advance, so collect as many variations as you want before moving on.</li>
+          </ul>
+        </section>
 
-    <div class="overlay-section">
-      <div class="overlay-section-label">Manage</div>
-      <div class="export-btns">
-        <button id="btnDownload">Download JSON</button>
-        <button id="btnManage">Manage samples</button>
-        <button id="btnReset">Reset all</button>
+        <section class="guide-section">
+          <h2 class="guide-section-title">Priority: what to collect first</h2>
+          <p>The categories in the sidebar are ordered top-to-bottom by priority. Work through them in that order. Don't sprawl across all of them at once.</p>
+
+          <h3 class="guide-tier">Tier 1: Essential</h3>
+          <p class="guide-tier-note">These are very commonly used. Best to just do all of them.</p>
+          <ul class="guide-list">
+            <li><strong>Lowercase Letters</strong></li>
+            <li><strong>Uppercase Letters</strong></li>
+            <li><strong>Digits</strong></li>
+            <li><strong>Basic Punctuation</strong>: period, comma, semicolon, colon, exclamation, question mark</li>
+            <li><strong>Quotes &amp; Apostrophes</strong></li>
+            <li><strong>Brackets</strong>: <code>( ) [ ] { }</code></li>
+            <li><strong>Special Characters</strong>: @ # $ % &amp; ^ _ ~ | \</li>
+          </ul>
+
+          <h3 class="guide-tier">Tier 2: Math basics</h3>
+          <p class="guide-tier-note">Important for typeset math.</p>
+          <ul class="guide-list">
+            <li><strong>Math Variables (lowercase)</strong>: italic math letters, rendered as a separate set from text letters</li>
+            <li><strong>Math Variables (uppercase)</strong></li>
+            <li><strong>Math Operators</strong>: <code>+ &minus; = &times; &divide; &lt; &gt;</code></li>
+            <li><strong>Delimiters</strong>: bracket variants drawn at multiple heights so they scale cleanly around tall math (matrices, vectors, big fractions). Heights you don't draw fall back to Latin Modern.</li>
+          </ul>
+
+          <h3 class="guide-tier">Tier 3: Math symbols</h3>
+          <p class="guide-tier-note">Needed for most undergraduate-level math.</p>
+          <ul class="guide-list">
+            <li><strong>Math Symbols</strong>: ± × ÷ √ ∞ ∂ ∇ ∅ ∀ ∃ etc.</li>
+            <li><strong>Binary Operators</strong>: ⊕ ⊗ ⊙ ⊖ ⊘ ⊻ ⊼ ⊽ (circled-plus is the XOR symbol)</li>
+            <li><strong>Big Operators</strong>: Σ Π ∫ ∬ ∮</li>
+            <li><strong>Greek Lowercase</strong></li>
+            <li><strong>Greek Uppercase</strong></li>
+            <li><strong>Relations</strong>: ≤ ≥ ≠ ≈ ≡ ⊂ ⊃ ∈</li>
+          </ul>
+
+          <h3 class="guide-tier">Tier 4: Optional</h3>
+          <p class="guide-tier-note">Skip unless you specifically need them.</p>
+          <ul class="guide-list">
+            <li><strong>Arrows</strong></li>
+            <li><strong>Dots &amp; Misc</strong>: center dot, ellipsis, primes, degree</li>
+          </ul>
+        </section>
+
+        <section class="guide-section">
+          <h2 class="guide-section-title">Tips for good samples</h2>
+          <ul class="guide-list">
+            <li><strong>Use Apple Pencil</strong> if you have one. The site captures pressure, so Pencil samples produce richer strokes than finger drawings.</li>
+            <li><strong>Vary your style.</strong> Draw the same letter a few times with slight differences (slant, size, openness). The font reads more natural with within-glyph variation than identical replicas.</li>
+            <li><strong>Lift the pen between strokes.</strong> Letters like <em>t</em> and <em>i</em> need their crossbar or dot as a separate stroke.</li>
+            <li><strong>Don't overthink.</strong> Aim for natural handwriting, not penmanship-class perfect.</li>
+            <li><strong>Skip what you won't use.</strong> You don't have to draw every glyph. If you know your work will never need a particular character (e.g. niche Greek symbols, certain arrows), feel free to skip it. Missing characters fall back to a default in the rendered output.</li>
+          </ul>
+        </section>
       </div>
-      <p class="footer-note">
-        Each sample is saved to the server immediately on accept.<br>
-        Download JSON to pull all samples to your local machine.
-      </p>
     </div>
-  </div>
-</div>
 
-<!-- Sample Manager Overlay -->
-<div class="manager-overlay" id="managerOverlay">
-  <div class="manager-header">
-    <h2>Manage samples</h2>
-    <button class="icon-btn" id="btnCloseManager">&times;</button>
-  </div>
-  <div class="manager-body" id="managerBody"></div>
-</div>
-
-<!-- Sample Detail View -->
-<div class="sample-detail" id="sampleDetail">
-  <div class="detail-header">
-    <div style="display:flex; align-items:center; gap:12px;">
-      <button class="nav-btn" id="btnBackDetail">&larr;</button>
-      <button class="nav-btn" id="btnPrevChar">&lsaquo;</button>
-      <h2 id="detailTitle">—</h2>
-      <button class="nav-btn" id="btnNextChar">&rsaquo;</button>
+    <div class="view view-collection">
+      <div class="main-stage">
+        <div class="info-col">
+          <div class="category-label">Reference</div>
+          <div class="char-display" id="charDisplay">—</div>
+          <canvas id="referenceCanvas" hidden></canvas>
+          <div class="char-name" id="charName"></div>
+          <div class="char-count" id="charCount">0 samples</div>
+        </div>
+        <div class="canvas-col">
+          <div class="controls">
+            <button class="btn-accept" id="btnAccept" disabled>Accept</button>
+            <button class="btn-undo" id="btnUndo" disabled>Undo</button>
+            <button class="btn-clear" id="btnClear" disabled>Clear</button>
+            <button class="btn-next" id="btnNext">Next</button>
+            <button class="btn-reference" id="btnReference" hidden>Matrix</button>
+          </div>
+          <div class="canvas-wrap">
+            <div class="category-label">Draw here:</div>
+            <canvas id="canvas"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
-    <span id="detailCount" style="font-size:12px; color:var(--muted); font-variant-numeric: tabular-nums;">—</span>
-  </div>
-  <div class="detail-body" id="detailBody"></div>
+
+    <div class="view view-manager">
+      <div class="manager-header">
+        <h2 id="managerTitle">Saved samples</h2>
+        <span class="manager-count" id="managerCount">0 samples</span>
+      </div>
+      <div class="manager-body" id="managerBody"></div>
+    </div>
+
+    <div class="view view-settings">
+      <div class="settings-body">
+        <h1 class="settings-title">Settings</h1>
+
+        <section class="settings-section">
+          <h2 class="settings-section-title">Preferences</h2>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Handedness</div>
+              <div class="settings-row-note">Flips the sidebar to the opposite side of the screen.</div>
+            </div>
+            <button id="btnHandedness">Right-handed</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h2 class="settings-section-title">Data</h2>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Download samples</div>
+              <div class="settings-row-note">Pulls every sample on the server into a JSON file.</div>
+            </div>
+            <button id="btnDownload">Download JSON</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Reset all</div>
+              <div class="settings-row-note">Permanently deletes every sample on the server. Cannot be undone.</div>
+            </div>
+            <button id="btnReset" class="btn-destructive">Reset all</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="status-bar-wrap">
+      <div class="status-bar" id="statusBar">Connecting…</div>
+    </div>
+  </main>
 </div>
 
 <script>
-let SAMPLES_PER_CHAR = 1;
-
 const CATEGORIES = [
+  // Tier 1: Essential
   { name: "Lowercase Letters", chars: "abcdefghijklmnopqrstuvwxyz".split(""), labels: null },
   { name: "Uppercase Letters", chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), labels: null },
   { name: "Digits", chars: "0123456789".split(""), labels: null },
@@ -910,66 +968,85 @@ const CATEGORIES = [
     labels: ["apostrophe", "double quote", "backtick"] },
   { name: "Brackets",
     chars: ["(", ")", "[", "]", "{", "}"],
-    labels: ["left paren", "right paren", "left bracket", "right bracket", "left brace", "right brace"] },
-  { name: "Math Operators",
-    chars: ["+", "-", "=", "*", "/", "<", ">"],
-    labels: ["plus", "minus / hyphen", "equals", "asterisk / multiply", "forward slash", "less than", "greater than"] },
+    labels: ["left parenthesis", "right parenthesis", "left bracket", "right bracket", "left brace", "right brace"] },
   { name: "Special Characters",
     chars: ["@", "#", "$", "%", "&", "^", "_", "~", "|", "\\"],
     labels: ["at sign", "hash / pound", "dollar sign", "percent", "ampersand", "caret", "underscore", "tilde", "pipe / vertical bar", "backslash"] },
-  { name: "Greek Lowercase",
-    chars: ["\u03B1","\u03B2","\u03B3","\u03B4","\u03B5","\u03B6","\u03B7","\u03B8","\u03B9","\u03BA","\u03BB","\u03BC","\u03BD","\u03BE","\u03C0","\u03C1","\u03C3","\u03C4","\u03C5","\u03C6","\u03C7","\u03C8","\u03C9"],
-    labels: ["alpha","beta","gamma","delta","epsilon","zeta","eta","theta","iota","kappa","lambda","mu","nu","xi","pi","rho","sigma","tau","upsilon","phi","chi","psi","omega"] },
-  { name: "Greek Uppercase",
-    chars: ["\u0393","\u0394","\u0398","\u039B","\u039E","\u03A0","\u03A3","\u03A6","\u03A8","\u03A9"],
-    labels: ["Gamma","Delta","Theta","Lambda","Xi","Pi","Sigma","Phi","Psi","Omega"] },
-  { name: "Big Operators",
-    chars: ["\u2211","\u220F","\u222B","\u222C","\u222E"],
-    labels: ["summation \u03A3","product \u03A0","integral","double integral","contour integral"] },
-  { name: "Relations",
-    chars: ["\u2264","\u2265","\u2260","\u2248","\u221D","\u2261","\u226A","\u226B","\u2282","\u2283","\u2286","\u2287","\u2208","\u2209"],
-    labels: ["less or equal \u2264","greater or equal \u2265","not equal \u2260","approx \u2248","proportional \u221D","equiv \u2261","much less \u226A","much greater \u226B","subset \u2282","superset \u2283","subset eq \u2286","superset eq \u2287","element of \u2208","not element \u2209"] },
-  { name: "Math Symbols",
-    chars: ["\u00B1","\u00D7","\u00F7","\u2213","\u221A","\u221E","\u2202","\u2207","\u2205","\u2200","\u2203","\u00AC","\u2227","\u2228","\u2229","\u222A"],
-    labels: ["plus-minus \u00B1","times \u00D7","divide \u00F7","minus-plus \u2213","sqrt radical \u221A","infinity \u221E","partial deriv \u2202","nabla/del \u2207","empty set \u2205","for all \u2200","exists \u2203","not \u00AC","logical and \u2227","logical or \u2228","intersection \u2229","union \u222A"] },
-  { name: "Arrows",
-    chars: ["\u2190","\u2191","\u2192","\u2193","\u2194","\u21D0","\u21D2","\u21D4","\u21A6"],
-    labels: ["left arrow \u2190","up arrow \u2191","right arrow \u2192","down arrow \u2193","left-right \u2194","left double \u21D0","right double (implies) \u21D2","iff \u21D4","maps to \u21A6"] },
-  { name: "Dots & Misc",
-    chars: ["\u22C5","\u2026","\u22EE","\u22EF","\u22F1","\u2032","\u2033","\u00B0"],
-    labels: ["center dot \u22C5","ellipsis \u2026","vertical dots \u22EE","horizontal dots \u22EF","diagonal dots \u22F1","prime \u2032","double prime \u2033","degree \u00B0"] },
+
+  // Tier 2: Math basics
   { name: "Math Variables (lowercase)", tag: "mathvar",
     chars: "abcdefghijklmnopqrstuvwxyz".split(""),
     labels: null },
   { name: "Math Variables (uppercase)", tag: "mathvar",
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
     labels: null },
-  { name: "Math Delimiters (stretchy)", tag: "mathdelim",
+  { name: "Math Operators",
+    chars: ["+", "-", "=", "*", "/", "<", ">"],
+    labels: ["plus", "minus / hyphen", "equals", "asterisk / multiply", "forward slash", "less than", "greater than"] },
+  { name: "Delimiters", tag: "mathdelim", sizes: 15,
     chars: ["(", ")", "[", "]", "{", "}"],
-    labels: [
-      "left paren \u2014 draw as 3 strokes: top curve, vertical bar, bottom curve",
-      "right paren \u2014 draw as 3 strokes: top curve, vertical bar, bottom curve",
-      "left bracket \u2014 draw as 3 strokes: top horizontal, vertical bar, bottom horizontal",
-      "right bracket \u2014 draw as 3 strokes: top horizontal, vertical bar, bottom horizontal",
-      "left brace \u2014 draw as 3 strokes: top hook, middle point, bottom hook",
-      "right brace \u2014 draw as 3 strokes: top hook, middle point, bottom hook",
-    ] },
+    labels: ["left parenthesis", "right parenthesis", "left bracket", "right bracket", "left brace", "right brace"] },
+
+  // Tier 3: Math symbols
+  { name: "Math Symbols",
+    chars: ["±","×","÷","∓","√","∞","∂","∇","∅","∀","∃","¬","∧","∨","∩","∪"],
+    labels: ["plus-minus ±","times ×","divide ÷","minus-plus ∓","sqrt radical √","infinity ∞","partial deriv ∂","nabla/del ∇","empty set ∅","for all ∀","exists ∃","not ¬","logical and ∧","logical or ∨","intersection ∩","union ∪"] },
+  { name: "Binary Operators",
+    chars: ["⊕","⊗","⊙","⊖","⊘","⊻","⊼","⊽"],
+    labels: ["circled plus / xor ⊕","circled times ⊗","circled dot ⊙","circled minus ⊖","circled slash ⊘","xor ⊻","nand ⊼","nor ⊽"] },
+  { name: "Big Operators",
+    chars: ["∑","∏","∫","∬","∮"],
+    labels: ["summation Σ","product Π","integral","double integral","contour integral"] },
+  { name: "Greek Lowercase",
+    chars: ["α","β","γ","δ","ε","ζ","η","θ","ι","κ","λ","μ","ν","ξ","π","ρ","σ","τ","υ","φ","χ","ψ","ω"],
+    labels: ["alpha","beta","gamma","delta","epsilon","zeta","eta","theta","iota","kappa","lambda","mu","nu","xi","pi","rho","sigma","tau","upsilon","phi","chi","psi","omega"] },
+  { name: "Greek Uppercase",
+    chars: ["Γ","Δ","Θ","Λ","Ξ","Π","Σ","Φ","Ψ","Ω"],
+    labels: ["Gamma","Delta","Theta","Lambda","Xi","Pi","Sigma","Phi","Psi","Omega"] },
+  { name: "Relations",
+    chars: ["≤","≥","≠","≈","∝","≡","≪","≫","⊂","⊃","⊆","⊇","∈","∉"],
+    labels: ["less or equal ≤","greater or equal ≥","not equal ≠","approx ≈","proportional ∝","equiv ≡","much less ≪","much greater ≫","subset ⊂","superset ⊃","subset eq ⊆","superset eq ⊇","element of ∈","not element ∉"] },
+
+  // Tier 4: Optional
+  { name: "Arrows",
+    chars: ["←","↑","→","↓","↔","⇐","⇒","⇔","↦"],
+    labels: ["left arrow ←","up arrow ↑","right arrow →","down arrow ↓","left-right ↔","left double ⇐","right double (implies) ⇒","iff ⇔","maps to ↦"] },
+  { name: "Dots & Misc",
+    chars: ["⋅","•","…","⋮","⋯","⋱","′","″","°","—","–"],
+    labels: ["center dot ⋅","bullet •","ellipsis …","vertical dots ⋮","horizontal dots ⋯","diagonal dots ⋱","prime ′","double prime ″","degree °","em dash —","en dash –"] },
 ];
 
-function progressKey(char, tag) {
+function progressKey(char, tag, size) {
+  if (size != null) return `${tag}:${char}_${size}`;
   return tag ? `${tag}:${char}` : char;
 }
-
-const ALL_KEYS = CATEGORIES.flatMap(c => c.chars.map(ch => progressKey(ch, c.tag)));
+const ALL_KEYS = CATEGORIES.flatMap(c => {
+  if (c.sizes) {
+    return c.chars.flatMap(ch =>
+      Array.from({ length: c.sizes }, (_, i) => progressKey(ch, c.tag, i + 1))
+    );
+  }
+  return c.chars.map(ch => progressKey(ch, c.tag));
+});
 
 let progress = {};
 let currentCategory = 0;
 let currentCharIdx = 0;
-let currentSampleIdx = 0;
+let currentSizeIdx = null; // Size 1..N when current category has `sizes`, else null
 let strokes = [];
 let currentStroke = [];
 let isDrawing = false;
 let saving = false;
+
+const openCategories = new Set();
+const openDelims = new Set(); // chars expanded inside a sized category
+let activeTab = "guide";
+let referenceType = localStorage.getItem("referenceType") || "matrix";
+let handedness = localStorage.getItem("handedness") || "right";
+let sidebarVisible = localStorage.getItem("sidebarVisible") !== "false";
+
+// Size-slot heights in canvas units (actual canvas height for each size 1..15)
+const DELIM_SIZE_HEIGHTS = [160, 200, 240, 280, 320, 360, 410, 460, 510, 560, 610, 660, 720, 780, 840];
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -1053,33 +1130,27 @@ function drawGuidelines(context, w, h) {
   const baseline = h * 0.7;
   const descender = h * 0.9;
 
-  // Ascender — fine dotted, very light
   context.strokeStyle = "#E5E2D8";
   context.lineWidth = 0.8;
   context.setLineDash([1, 4]);
   context.beginPath(); context.moveTo(0, ascender); context.lineTo(w, ascender); context.stroke();
 
-  // X-height — dashed, medium
   context.strokeStyle = "#C8C5BC";
   context.lineWidth = 0.8;
   context.setLineDash([5, 4]);
   context.beginPath(); context.moveTo(0, xHeight); context.lineTo(w, xHeight); context.stroke();
 
-  // Baseline — solid, the anchor line (monochrome)
   context.strokeStyle = "#9A9789";
   context.lineWidth = 1.3;
   context.setLineDash([]);
   context.beginPath(); context.moveTo(0, baseline); context.lineTo(w, baseline); context.stroke();
 
-  // Descender — fine dotted
   context.strokeStyle = "#E5E2D8";
   context.lineWidth = 0.8;
   context.setLineDash([1, 4]);
   context.beginPath(); context.moveTo(0, descender); context.lineTo(w, descender); context.stroke();
 
   context.setLineDash([]);
-
-  // Left-aligned labels (right-handed users — keep markers away from the writing hand)
   context.fillStyle = "#A8A59C";
   context.font = "6.5px ui-monospace, 'SF Mono', Menlo, monospace";
   context.textAlign = "left";
@@ -1122,76 +1193,163 @@ function redraw() {
   const w = canvas.width / dpr;
   const h = canvas.height / dpr;
   ctx.clearRect(0, 0, w, h);
-  drawGuidelines(ctx, w, h);
+  const cat = CATEGORIES[currentCategory];
+  const isDelim = cat && cat.sizes && currentSizeIdx;
+  if (!isDelim) {
+    drawGuidelines(ctx, w, h);
+  } else {
+    // Shift the matrix slightly toward the opposite side of the target so the
+    // user's drawing zone gets a bit more breathing room near canvas center.
+    const char = cat.chars[currentCharIdx];
+    let xShift = 0;
+    if (LEFT_DELIMS.has(char)) xShift = w * 0.10;
+    else if (RIGHT_DELIMS.has(char)) xShift = -w * 0.10;
+    drawMatrixContent(ctx, xShift, 0, w, h, currentSizeIdx, referenceType, 0.32);
+  }
   drawStrokes(ctx, strokes);
 }
 
-function updateDisplay() {
-  const cat = CATEGORIES[currentCategory];
-  const char = cat.chars[currentCharIdx];
-  const tag = cat.tag || null;
-  const key = progressKey(char, tag);
-  const label = cat.labels ? cat.labels[currentCharIdx] : null;
-  const saved = progress[key] || 0;
-
-  document.getElementById("categoryLabel").textContent = cat.name;
-
-  let displayChar = char;
-  if (char === " ") displayChar = "\u2423";
-  document.getElementById("charDisplay").textContent = displayChar;
-
-  const labelEl = document.getElementById("charLabel");
-  if (label) {
-    labelEl.innerHTML = `<span class="char-quoted">"${char}"</span> &mdash; ${label} &nbsp;·&nbsp; sample ${currentSampleIdx + 1} of ${SAMPLES_PER_CHAR}`;
-  } else {
-    labelEl.textContent = `sample ${currentSampleIdx + 1} of ${SAMPLES_PER_CHAR}`;
-  }
-
-  const dots = document.getElementById("sampleDots");
-  dots.innerHTML = "";
-  for (let i = 0; i < SAMPLES_PER_CHAR; i++) {
-    const dot = document.createElement("div");
-    dot.className = "sample-dot";
-    if (i < saved) dot.classList.add("done");
-    if (i === currentSampleIdx) dot.classList.add("current");
-    dots.appendChild(dot);
-  }
-
-  const totalKeys = ALL_KEYS.length;
-  const completedKeys = ALL_KEYS.filter(k => (progress[k] || 0) >= SAMPLES_PER_CHAR).length;
-  const totalSamples = ALL_KEYS.reduce((sum, k) => sum + (progress[k] || 0), 0);
-  const totalNeeded = totalKeys * SAMPLES_PER_CHAR;
-  document.getElementById("progressText").innerHTML =
-    `<strong>${completedKeys}</strong> / ${totalKeys} chars &nbsp;·&nbsp; ${totalSamples} samples`;
-  document.getElementById("progressBar").style.width =
-    `${(totalSamples / totalNeeded) * 100}%`;
-
-  renderCharStrip();
+function _matrixLayout(w, h, rows, kind) {
+  // Shared layout math used by both drawMatrixContent and drawDelimReference
+  // so delimiter placement can hug the actual letter columns instead of the
+  // wider region. Each row gets a fixed-ish vertical slot so a 1-row matrix
+  // doesn't get stretched to fill the canvas.
+  const cols = kind === "vector" ? 1 : 3;
+  const colChars = kind === "vector" ? ["x"] : ["a", "b", "c"];
+  const rowGap = Math.min(48, (h - 16) / Math.max(rows, 1));
+  const fontSize = Math.max(10, Math.min(22, rowGap * 0.55));
+  const matrixH = rowGap * rows;
+  const matrixTop = Math.max(8, (h - matrixH) / 2);
+  const matrixBot = matrixTop + matrixH;
+  const cellW = Math.min(40, fontSize * 1.4);
+  const matrixW = cellW * cols;
+  return { cols, colChars, rowGap, fontSize, cellW, matrixW, matrixH, matrixTop, matrixBot };
 }
 
+function drawMatrixContent(context, x, y, w, h, rows, kind, alpha = 0.6) {
+  // Renders a faint LaTeX-style matrix or vector grid centered in
+  // (x + w/2, y + h/2). No delimiters are drawn here.
+  const layout = _matrixLayout(w, h, rows, kind);
+  const startX = x + w / 2 - layout.matrixW / 2 + layout.cellW / 2;
+  context.save();
+  context.fillStyle = `rgba(10, 10, 10, ${alpha})`;
+  context.font = `italic ${layout.fontSize}px "Latin Modern Math", "Times New Roman", serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  for (let r = 0; r < rows; r++) {
+    const cy = y + layout.matrixTop + layout.rowGap * (r + 0.5);
+    for (let c = 0; c < layout.cols; c++) {
+      context.fillText(layout.colChars[c % layout.colChars.length], startX + layout.cellW * c, cy);
+    }
+  }
+  context.restore();
+}
 
-function renderCharStrip() {
-  const strip = document.getElementById("charStrip");
+const DELIM_PARTNER = { "(": ")", ")": "(", "[": "]", "]": "[", "{": "}", "}": "{", "|": "|" };
+const LEFT_DELIMS = new Set(["(", "[", "{"]);
+const RIGHT_DELIMS = new Set([")", "]", "}"]);
+
+function drawDelimGlyph(context, char, side, x, top, bot, opacity) {
+  // Programmatically renders a tall delimiter glyph at the requested height.
+  // Used only for the reference canvas. Width and stroke weight are constant
+  // across sizes so the delimiter only stretches vertically — it doesn't grow
+  // bolder or wider with size.
+  const h = bot - top;
+  const w = 16;
+  const sx = side === "left" ? x : x;
+  const innerX = side === "left" ? sx + w : sx;
+  const outerX = side === "left" ? sx : sx + w;
+  context.save();
+  context.globalAlpha = opacity;
+  context.strokeStyle = "#0A0A0A";
+  context.lineWidth = 2.5;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.beginPath();
+  if (char === "(" || char === ")") {
+    context.moveTo(innerX, top);
+    context.bezierCurveTo(outerX, top + h * 0.22, outerX, bot - h * 0.22, innerX, bot);
+  } else if (char === "[" || char === "]") {
+    context.moveTo(innerX, top);
+    context.lineTo(outerX, top);
+    context.lineTo(outerX, bot);
+    context.lineTo(innerX, bot);
+  } else if (char === "{" || char === "}") {
+    const mid = (top + bot) / 2;
+    const peak = outerX;
+    const valley = innerX;
+    const midPeak = (peak + valley) / 2;
+    context.moveTo(valley, top);
+    context.bezierCurveTo(midPeak, top + h * 0.05, peak, top + h * 0.18, peak, mid - h * 0.04);
+    context.lineTo(peak, mid + h * 0.04);
+    context.bezierCurveTo(peak, bot - h * 0.18, midPeak, bot - h * 0.05, valley, bot);
+    // Center dimple toward the inside
+    context.moveTo(peak, mid - h * 0.04);
+    context.lineTo(valley, mid);
+    context.lineTo(peak, mid + h * 0.04);
+  } else if (char === "|") {
+    const xc = sx + w / 2;
+    context.moveTo(xc, top);
+    context.lineTo(xc, bot);
+  }
+  context.stroke();
+  context.restore();
+}
+
+function drawDelimReference() {
+  const refCanvas = document.getElementById("referenceCanvas");
+  if (!refCanvas || refCanvas.hidden) return;
   const cat = CATEGORIES[currentCategory];
-  strip.innerHTML = "";
-  cat.chars.forEach((ch, i) => {
-    const key = progressKey(ch, cat.tag);
-    const count = progress[key] || 0;
-    const btn = document.createElement("button");
-    btn.className = "char-chip";
-    if (i === currentCharIdx) btn.classList.add("current");
-    else if (count >= SAMPLES_PER_CHAR) btn.classList.add("done");
-    btn.textContent = ch;
-    btn.onclick = () => {
-      currentCharIdx = i;
-      currentSampleIdx = progress[key] || 0;
-      clearCanvas();
-      updateDisplay();
-    };
-    strip.appendChild(btn);
-  });
-  const currentBtn = strip.querySelector(".current");
-  if (currentBtn) currentBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  const char = cat.chars[currentCharIdx];
+  const dpr = window.devicePixelRatio || 2;
+  const w = refCanvas.width / dpr;
+  const h = refCanvas.height / dpr;
+  const refCtx = refCanvas.getContext("2d");
+  refCtx.setTransform(1, 0, 0, 1, 0, 0);
+  refCtx.scale(dpr, dpr);
+  refCtx.clearRect(0, 0, w, h);
+
+  // Compute matrix layout so we can hug delimiters tight to the letter columns.
+  const layout = _matrixLayout(w, h, currentSizeIdx, referenceType);
+  const matrixX = w / 2 - layout.matrixW / 2;
+
+  // Draw the matrix/vector content
+  drawMatrixContent(refCtx, 0, 0, w, h, currentSizeIdx, referenceType, 0.7);
+
+  // Decide which char goes on each side.
+  const targetIsLeft = LEFT_DELIMS.has(char);
+  const targetIsRight = RIGHT_DELIMS.has(char);
+  const partner = DELIM_PARTNER[char] || char;
+  const leftChar = targetIsLeft ? char : (RIGHT_DELIMS.has(char) ? partner : char);
+  const rightChar = targetIsRight ? char : (LEFT_DELIMS.has(char) ? partner : char);
+
+  // Delimiters wrap the actual matrix content, not the full canvas, so a
+  // 1-row matrix gets a small delimiter rather than one stretched to canvas height.
+  const top = layout.matrixTop - 4;
+  const bot = layout.matrixBot + 4;
+  const opacityTarget = 1.0;
+  const opacityOther = 0.22;
+
+  // Position delimiters just outside the matrix content (small fixed gap).
+  // delimW must match the constant in drawDelimGlyph.
+  const delimW = 16;
+  const gap = 4;
+
+  drawDelimGlyph(refCtx, leftChar, "left",
+    Math.max(0, matrixX - gap - delimW), top, bot,
+    targetIsLeft ? opacityTarget : opacityOther);
+  drawDelimGlyph(refCtx, rightChar, "right",
+    Math.min(w - delimW, matrixX + layout.matrixW + gap), top, bot,
+    targetIsRight ? opacityTarget : opacityOther);
+}
+
+function toggleReference() {
+  referenceType = referenceType === "matrix" ? "vector" : "matrix";
+  localStorage.setItem("referenceType", referenceType);
+  const btn = document.getElementById("btnReference");
+  if (btn) btn.textContent = referenceType === "matrix" ? "Matrix" : "Vector";
+  redraw();
+  drawDelimReference();
 }
 
 function updateButtons() {
@@ -1213,9 +1371,205 @@ function clearCanvas() {
   updateButtons();
 }
 
-function skip() {
+function updateDisplay() {
+  const cat = CATEGORIES[currentCategory];
+  const char = cat.chars[currentCharIdx];
+  const tag = cat.tag || null;
+
+  // For sized categories, ensure currentSizeIdx is set; for others, clear it.
+  if (cat.sizes) {
+    if (currentSizeIdx == null || currentSizeIdx < 1 || currentSizeIdx > cat.sizes) {
+      currentSizeIdx = 1;
+    }
+  } else {
+    currentSizeIdx = null;
+  }
+
+  const key = progressKey(char, tag, currentSizeIdx);
+  const label = cat.labels ? cat.labels[currentCharIdx] : null;
+  const saved = progress[key] || 0;
+
+
+  let displayChar = char;
+  if (char === " ") displayChar = "␣";
+  document.getElementById("charDisplay").textContent = displayChar;
+
+  const sizeSuffix = currentSizeIdx ? ` · Size ${currentSizeIdx}` : "";
+  document.getElementById("charName").textContent = (label || "") + sizeSuffix;
+  const countText = `${saved} sample${saved === 1 ? "" : "s"}`;
+  document.getElementById("charCount").textContent = countText;
+  document.getElementById("managerTitle").innerHTML =
+    `Saved samples — <span style="font-family:var(--font-handwriting); font-size:1.1em;">${displayChar}</span>${sizeSuffix}`;
+  document.getElementById("managerCount").textContent = countText;
+
+  const charsWithSamples = ALL_KEYS.filter(k => (progress[k] || 0) > 0).length;
+  document.getElementById("progressBar").style.width =
+    `${(charsWithSamples / ALL_KEYS.length) * 100}%`;
+
+  // For sized (delimiter) categories, hide the handwritten char display and
+  // show the reference canvas in its place. Toggle button also surfaces.
+  const refToggle = document.getElementById("btnReference");
+  if (refToggle) refToggle.hidden = !cat.sizes;
+  const refCanvas = document.getElementById("referenceCanvas");
+  if (refCanvas) refCanvas.hidden = !cat.sizes;
+  const charDisplayEl = document.getElementById("charDisplay");
+  if (charDisplayEl) charDisplayEl.hidden = !!cat.sizes;
+  const infoCol = document.querySelector(".info-col");
+  if (infoCol) infoCol.classList.toggle("delim-mode", !!cat.sizes);
+  applyCanvasSize();
+
+  renderSidebar();
+
+  if (activeTab === "manager") loadManageSamples();
+}
+
+function applyCanvasSize() {
+  const cat = CATEGORIES[currentCategory];
+  const targetH = cat.sizes && currentSizeIdx
+    ? DELIM_SIZE_HEIGHTS[currentSizeIdx - 1]
+    : 160;
+  canvas.style.height = targetH + "px";
+  const refCanvas = document.getElementById("referenceCanvas");
+  if (refCanvas) {
+    refCanvas.style.height = targetH + "px";
+    const dpr = window.devicePixelRatio || 2;
+    refCanvas.width = (refCanvas.offsetWidth || 240) * dpr;
+    refCanvas.height = (refCanvas.offsetHeight || targetH) * dpr;
+  }
+  resizeCanvas();
+  drawDelimReference();
+}
+
+function renderSidebar() {
+  const body = document.getElementById("sidebarBody");
+  body.innerHTML = "";
+  CATEGORIES.forEach((cat, catIdx) => {
+    const sect = document.createElement("div");
+    sect.className = "cat-section";
+
+    const total = cat.chars.length * (cat.sizes || 1);
+    const filled = cat.sizes
+      ? cat.chars.reduce((acc, ch) => {
+          for (let s = 1; s <= cat.sizes; s++) {
+            if ((progress[progressKey(ch, cat.tag, s)] || 0) > 0) acc++;
+          }
+          return acc;
+        }, 0)
+      : cat.chars.filter(c => (progress[progressKey(c, cat.tag)] || 0) > 0).length;
+    const isOpen = openCategories.has(catIdx);
+
+    const header = document.createElement("button");
+    header.className = "cat-header";
+    header.innerHTML = `
+      <span class="cat-chevron">${isOpen ? "▼" : "▶"}</span>
+      <span class="cat-name">${cat.name}</span>
+      <span class="cat-coverage">${filled}/${total}</span>
+    `;
+    header.onclick = () => {
+      if (openCategories.has(catIdx)) openCategories.delete(catIdx);
+      else openCategories.add(catIdx);
+      renderSidebar();
+    };
+    sect.appendChild(header);
+
+    if (isOpen) {
+      const list = document.createElement("div");
+      list.className = "cat-body";
+      cat.chars.forEach((ch, i) => {
+        if (cat.sizes) {
+          renderDelimRow(list, cat, catIdx, ch, i);
+        } else {
+          const key = progressKey(ch, cat.tag);
+          const count = progress[key] || 0;
+          const row = document.createElement("button");
+          row.className = "char-row";
+          if (catIdx === currentCategory && i === currentCharIdx) row.classList.add("current");
+          const display = ch === " " ? "␣" : ch;
+          const name = cat.labels ? cat.labels[i] : "";
+          row.innerHTML = `
+            <span class="char-row-glyph">${display}</span>
+            <span class="char-row-name">${name}</span>
+            <span class="char-row-count">${count}</span>
+          `;
+          row.onclick = () => selectChar(catIdx, i);
+          list.appendChild(row);
+        }
+      });
+      sect.appendChild(list);
+    }
+
+    body.appendChild(sect);
+  });
+}
+
+function renderDelimRow(list, cat, catIdx, ch, i) {
+  const delimKey = `${catIdx}:${i}`;
+  const isExpanded = openDelims.has(delimKey);
+  let filled = 0;
+  for (let s = 1; s <= cat.sizes; s++) {
+    if ((progress[progressKey(ch, cat.tag, s)] || 0) > 0) filled++;
+  }
+
+  const row = document.createElement("button");
+  row.className = "char-row delim-row";
+  if (catIdx === currentCategory && i === currentCharIdx) row.classList.add("current-parent");
+  const display = ch === " " ? "␣" : ch;
+  const name = cat.labels ? cat.labels[i] : "";
+  row.innerHTML = `
+    <span class="cat-chevron">${isExpanded ? "▼" : "▶"}</span>
+    <span class="char-row-glyph">${display}</span>
+    <span class="char-row-name">${name}</span>
+    <span class="char-row-count">${filled}/${cat.sizes}</span>
+  `;
+  row.onclick = () => {
+    if (openDelims.has(delimKey)) openDelims.delete(delimKey);
+    else openDelims.add(delimKey);
+    renderSidebar();
+  };
+  list.appendChild(row);
+
+  if (isExpanded) {
+    for (let s = 1; s <= cat.sizes; s++) {
+      const sKey = progressKey(ch, cat.tag, s);
+      const sCount = progress[sKey] || 0;
+      const sRow = document.createElement("button");
+      sRow.className = "size-row";
+      if (catIdx === currentCategory && i === currentCharIdx && s === currentSizeIdx) {
+        sRow.classList.add("current");
+      }
+      sRow.innerHTML = `
+        <span class="size-row-label">Size ${s}</span>
+        <span class="char-row-count">${sCount}</span>
+      `;
+      sRow.onclick = () => selectChar(catIdx, i, s);
+      list.appendChild(sRow);
+    }
+  }
+}
+
+function selectChar(catIdx, charIdx, sizeIdx) {
+  currentCategory = catIdx;
+  currentCharIdx = charIdx;
+  currentSizeIdx = sizeIdx != null ? sizeIdx : null;
   clearCanvas();
-  advanceChar();
+  updateDisplay();
+}
+
+function next() {
+  const cat = CATEGORIES[currentCategory];
+  if (cat.sizes && currentSizeIdx != null) {
+    // Cycle through sizes for current delimiter; on overflow, move to next delimiter at size 1.
+    if (currentSizeIdx < cat.sizes) {
+      currentSizeIdx++;
+    } else {
+      currentCharIdx = (currentCharIdx + 1) % cat.chars.length;
+      currentSizeIdx = 1;
+    }
+  } else {
+    currentCharIdx = (currentCharIdx + 1) % cat.chars.length;
+  }
+  clearCanvas();
+  updateDisplay();
 }
 
 async function accept() {
@@ -1223,8 +1577,33 @@ async function accept() {
   const cat = CATEGORIES[currentCategory];
   const char = cat.chars[currentCharIdx];
   const tag = cat.tag || null;
-  const key = progressKey(char, tag);
-  const strokeData = strokes.map(s => s.map(p => [p.x, p.y, p.pressure]));
+  const size = cat.sizes ? currentSizeIdx : null;
+  const key = progressKey(char, tag, size);
+
+  // For non-delimiter glyphs, horizontally normalize so the visible-ink
+  // bounding box is centered on the canvas. Stroke width scales with pressure
+  // (lineWidth = 1 + pressure*5), so a pressure-asymmetric character has its
+  // visible bbox offset from its stroke-point bbox. Using point coords alone
+  // would leave the rendered char slightly off-center; account for the half
+  // line-width at each point so the leftmost-inked and rightmost-inked pixels
+  // really do straddle the canvas midline.
+  let dx = 0;
+  if (!cat.sizes) {
+    let minX = Infinity, maxX = -Infinity;
+    for (const stroke of strokes) {
+      for (const pt of stroke) {
+        const halfW = (1 + (pt.pressure != null ? pt.pressure : 0.5) * 5) / 2;
+        const lx = pt.x - halfW;
+        const rx = pt.x + halfW;
+        if (lx < minX) minX = lx;
+        if (rx > maxX) maxX = rx;
+      }
+    }
+    const dpr = window.devicePixelRatio || 2;
+    const cssW = canvas.width / dpr;
+    dx = (cssW / 2) - (minX + maxX) / 2;
+  }
+  const strokeData = strokes.map(s => s.map(p => [p.x + dx, p.y, p.pressure]));
 
   saving = true;
   updateButtons();
@@ -1236,7 +1615,7 @@ async function accept() {
     const cssH = canvas.height / dpr;
     const body = {
       char,
-      sample_idx: currentSampleIdx,
+      sample_idx: progress[key] || 0,
       strokes: strokeData,
       canvas: {
         width: cssW,
@@ -1246,6 +1625,7 @@ async function accept() {
       },
     };
     if (tag) body.tag = tag;
+    if (size != null) body.size = size;
     const resp = await fetch("/api/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1256,9 +1636,10 @@ async function accept() {
       throw new Error(err.error || `HTTP ${resp.status}`);
     }
     progress[key] = (progress[key] || 0) + 1;
-    setStatus(`Saved sample ${progress[key]} for "${char}"${tag ? ` [${tag}]` : ""}`, "saved");
+    const sizeMsg = size != null ? ` size ${size}` : "";
+    setStatus(`Saved sample ${progress[key]} for "${char}"${tag ? ` [${tag}]` : ""}${sizeMsg}`, "saved");
     clearCanvas();
-    advanceSample();
+    updateDisplay();
   } catch (err) {
     setStatus(`Save failed: ${err.message}`, "error");
   } finally {
@@ -1267,68 +1648,143 @@ async function accept() {
   }
 }
 
-function advanceSample() {
+// ===== Tabs =====
+
+function setTab(tab) {
+  activeTab = tab;
+  const main = document.querySelector(".main");
+  main.classList.remove("tab-guide", "tab-collection", "tab-manager", "tab-settings");
+  main.classList.add(`tab-${tab}`);
+  document.querySelectorAll(".tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === tab);
+  });
+  if (tab === "manager") loadManageSamples();
+}
+
+// ===== Manager view =====
+
+async function loadManageSamples() {
   const cat = CATEGORIES[currentCategory];
   const char = cat.chars[currentCharIdx];
-  const key = progressKey(char, cat.tag);
-  const saved = progress[key] || 0;
-  if (saved >= SAMPLES_PER_CHAR) {
-    advanceChar();
-  } else {
-    currentSampleIdx = saved;
-    updateDisplay();
-  }
-}
-
-function advanceChar() {
-  const cat = CATEGORIES[currentCategory];
-  for (let i = currentCharIdx + 1; i < cat.chars.length; i++) {
-    const key = progressKey(cat.chars[i], cat.tag);
-    if ((progress[key] || 0) < SAMPLES_PER_CHAR) {
-      currentCharIdx = i;
-      currentSampleIdx = progress[key] || 0;
-      updateDisplay();
+  const tag = cat.tag || null;
+  const size = cat.sizes ? currentSizeIdx : null;
+  const body = document.getElementById("managerBody");
+  body.innerHTML = '<p class="manage-empty">Loading…</p>';
+  try {
+    let url = `/api/list-char?char=${encodeURIComponent(char)}`;
+    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    // Filter by size on the client (server doesn't know about sizes).
+    const samples = size != null
+      ? data.samples.filter(s => s.size === size)
+      : (cat.sizes
+          ? data.samples.filter(s => s.size == null) // legacy / unsized
+          : data.samples);
+    body.innerHTML = "";
+    if (samples.length === 0) {
+      body.innerHTML = '<p class="manage-empty">No samples yet</p>';
       return;
     }
-  }
-  showCategoryPicker();
-}
+    samples.forEach(sample => {
+      const card = document.createElement("div");
+      card.className = "sample-card";
+      const previewCanvas = document.createElement("canvas");
+      previewCanvas.className = "sample-preview";
+      previewCanvas.width = 320;
+      previewCanvas.height = 160;
+      const pctx = previewCanvas.getContext("2d");
 
-function goToChar(catIdx, charIdx) {
-  currentCategory = catIdx;
-  currentCharIdx = charIdx;
-  const cat = CATEGORIES[catIdx];
-  const key = progressKey(cat.chars[charIdx], cat.tag);
-  currentSampleIdx = progress[key] || 0;
-  document.getElementById("overlay").classList.remove("show");
-  clearCanvas();
-  updateDisplay();
-}
+      // Scale and center the original drawing inside the preview buffer.
+      // Strokes are stored in the original canvas's CSS-pixel coordinates;
+      // sample.canvas carries those dimensions (it may be a 320x160 text
+      // sample or, e.g., a 320x520 delimiter sample for size 9). Without
+      // this fit, tall delimiter samples render off-canvas and short text
+      // samples sit in the wrong corner.
+      const origW = sample.canvas && sample.canvas.width ? sample.canvas.width : 320;
+      const origH = sample.canvas && sample.canvas.height ? sample.canvas.height : 160;
+      const fitScale = Math.min(320 / origW, 160 / origH);
+      const drawW = origW * fitScale;
+      const drawH = origH * fitScale;
+      const offsetX = (320 - drawW) / 2;
+      const offsetY = (160 - drawH) / 2;
 
-function showCategoryPicker() {
-  const grid = document.getElementById("catGrid");
-  grid.innerHTML = "";
-  CATEGORIES.forEach((cat, catIdx) => {
-    const total = cat.chars.length;
-    const done = cat.chars.filter(c => (progress[progressKey(c, cat.tag)] || 0) >= SAMPLES_PER_CHAR).length;
-    const btn = document.createElement("button");
-    btn.className = "cat-btn" + (done === total ? " cat-complete" : "");
-    btn.innerHTML = `
-      <span style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;">
-        <span class="cat-btn-name">${cat.name}</span>
-        <span class="cat-btn-chars">${cat.chars.slice(0, 18).join(" ")}${cat.chars.length > 18 ? " …" : ""}</span>
-      </span>
-      <span class="cat-progress">${done} / ${total}</span>`;
-    btn.onclick = () => {
-      for (let i = 0; i < cat.chars.length; i++) {
-        if ((progress[progressKey(cat.chars[i], cat.tag)] || 0) < SAMPLES_PER_CHAR) { goToChar(catIdx, i); return; }
+      pctx.save();
+      pctx.translate(offsetX, offsetY);
+      pctx.scale(fitScale, fitScale);
+      if (sample.size != null) {
+        drawMatrixContent(pctx, 0, 0, origW, origH, sample.size, referenceType, 0.32);
+      } else {
+        drawGuidelines(pctx, origW, origH);
       }
-      goToChar(catIdx, 0);
-    };
-    grid.appendChild(btn);
-  });
-  document.getElementById("overlay").classList.add("show");
+      drawStrokes(pctx, sample.strokes);
+      pctx.restore();
+      const info = document.createElement("div");
+      info.className = "sample-info";
+      const date = sample.timestamp ? new Date(sample.timestamp).toLocaleDateString() : "unknown";
+      info.innerHTML = `<div class="sid">${sample.source_id}</div><div>${date} &nbsp;·&nbsp; ${sample.strokes.length} stroke${sample.strokes.length !== 1 ? "s" : ""}</div>`;
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-delete-sample";
+      delBtn.textContent = "Delete";
+      delBtn.onclick = async () => {
+        if (!confirm(`Delete sample ${sample.source_id}?`)) return;
+        delBtn.disabled = true;
+        delBtn.textContent = "…";
+        try {
+          const r = await fetch("/api/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ source_id: sample.source_id }),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          card.remove();
+          const c = CATEGORIES[currentCategory];
+          const ch = c.chars[currentCharIdx];
+          const k = progressKey(ch, c.tag);
+          progress[k] = Math.max(0, (progress[k] || 1) - 1);
+          updateDisplay();
+        } catch (err) {
+          alert(`Delete failed: ${err.message}`);
+          delBtn.disabled = false;
+          delBtn.textContent = "Delete";
+        }
+      };
+      card.appendChild(previewCanvas);
+      card.appendChild(info);
+      card.appendChild(delBtn);
+      body.appendChild(card);
+    });
+  } catch (err) {
+    body.innerHTML = `<p class="manage-empty error">Error: ${err.message}</p>`;
+  }
 }
+
+// ===== Sidebar visibility / handedness =====
+
+function applyAppLayout() {
+  const app = document.getElementById("app");
+  app.classList.toggle("left-handed", handedness === "left");
+  app.classList.toggle("no-sidebar", !sidebarVisible);
+  document.body.classList.toggle("left-handed", handedness === "left");
+  document.body.classList.toggle("no-sidebar", !sidebarVisible);
+  document.getElementById("btnHandedness").textContent =
+    handedness === "right" ? "Right-handed" : "Left-handed";
+}
+
+function toggleSidebar() {
+  sidebarVisible = !sidebarVisible;
+  localStorage.setItem("sidebarVisible", sidebarVisible);
+  applyAppLayout();
+}
+
+function toggleHandedness() {
+  handedness = handedness === "right" ? "left" : "right";
+  localStorage.setItem("handedness", handedness);
+  applyAppLayout();
+}
+
+// ===== Download / Reset =====
 
 async function downloadSamples() {
   setStatus("Downloading…", "saving");
@@ -1362,287 +1818,14 @@ async function resetAll() {
     progress = {};
     currentCategory = 0;
     currentCharIdx = 0;
-    currentSampleIdx = 0;
     updateDisplay();
-    document.getElementById("overlay").classList.remove("show");
-    requestAnimationFrame(() => showCategoryPicker());
     setStatus(`Deleted ${data.deleted} samples`, "saved");
   } catch (err) {
     setStatus(`Reset failed: ${err.message}`, "error");
   }
 }
 
-// ========== SAMPLE MANAGER ==========
-
-function openManager() {
-  document.getElementById("overlay").classList.remove("show");
-  renderManagerGrid();
-  document.getElementById("managerOverlay").classList.add("show");
-}
-
-function closeManager() {
-  document.getElementById("managerOverlay").classList.remove("show");
-}
-
-function renderManagerGrid() {
-  const body = document.getElementById("managerBody");
-  body.innerHTML = "";
-  CATEGORIES.forEach((cat, catIdx) => {
-    const label = document.createElement("div");
-    label.className = "manager-cat-label";
-    label.textContent = cat.name;
-    body.appendChild(label);
-    const grid = document.createElement("div");
-    grid.className = "manager-char-grid";
-    cat.chars.forEach((ch, chIdx) => {
-      const key = progressKey(ch, cat.tag);
-      const cell = document.createElement("div");
-      cell.className = "manager-char-cell";
-      const count = progress[key] || 0;
-      if (count > 0) cell.classList.add("has-samples");
-      cell.innerHTML = `<span>${ch}</span><span class="cell-count">${count}</span>`;
-      cell.onclick = () => {
-        managerCatIdx = catIdx;
-        managerCharIdx = chIdx;
-        openCharDetail(ch, cat.name, cat.tag);
-      };
-      grid.appendChild(cell);
-    });
-    body.appendChild(grid);
-  });
-}
-
-let managerCatIdx = -1;
-let managerCharIdx = -1;
-
-async function openCharDetail(char, catName, tag) {
-  const detail = document.getElementById("sampleDetail");
-  const body = document.getElementById("detailBody");
-  const title = document.getElementById("detailTitle");
-  const countEl = document.getElementById("detailCount");
-  const key = progressKey(char, tag);
-
-  const catLabel = catName || (managerCatIdx >= 0 ? CATEGORIES[managerCatIdx].name : "");
-  const posLabel = managerCatIdx >= 0 ? ` (${managerCharIdx + 1}/${CATEGORIES[managerCatIdx].chars.length})` : "";
-  title.innerHTML = `<span style="font-family:var(--font-handwriting); font-size:1.2em;">${char}</span> &mdash; ${catLabel}${posLabel}`;
-  countEl.textContent = "Loading…";
-  body.innerHTML = '<p style="text-align:center; color:var(--muted); padding:40px; font-size:13px;">Loading samples…</p>';
-  detail.classList.add("show");
-
-  try {
-    let url = `/api/list-char?char=${encodeURIComponent(char)}`;
-    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    countEl.textContent = `${data.count} sample${data.count !== 1 ? 's' : ''}`;
-    body.innerHTML = "";
-    if (data.count === 0) {
-      body.innerHTML = '<p style="text-align:center; color:var(--muted); padding:40px; font-size:13px;">No samples yet</p>';
-    }
-    data.samples.forEach(sample => {
-      const card = document.createElement("div");
-      card.className = "sample-card";
-      const previewCanvas = document.createElement("canvas");
-      previewCanvas.className = "sample-preview";
-      previewCanvas.width = 320;
-      previewCanvas.height = 160;
-      const pctx = previewCanvas.getContext("2d");
-      pctx.scale(1.6, 1.6);
-      drawGuidelines(pctx, 200, 100);
-      drawStrokes(pctx, sample.strokes);
-      const info = document.createElement("div");
-      info.className = "sample-info";
-      const date = sample.timestamp ? new Date(sample.timestamp).toLocaleDateString() : "unknown";
-      info.innerHTML = `<div class="sid">${sample.source_id}</div><div>${date} &nbsp;·&nbsp; ${sample.strokes.length} stroke${sample.strokes.length !== 1 ? 's' : ''}</div>`;
-      const delBtn = document.createElement("button");
-      delBtn.className = "btn-delete-sample";
-      delBtn.textContent = "Delete";
-      delBtn.onclick = async () => {
-        if (!confirm(`Delete sample ${sample.source_id}?`)) return;
-        delBtn.disabled = true;
-        delBtn.textContent = "…";
-        try {
-          const r = await fetch("/api/delete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ source_id: sample.source_id }),
-          });
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          card.remove();
-          progress[key] = Math.max(0, (progress[key] || 1) - 1);
-          countEl.textContent = `${progress[key]} sample${progress[key] !== 1 ? 's' : ''}`;
-          updateDisplay();
-        } catch (err) {
-          alert(`Delete failed: ${err.message}`);
-          delBtn.disabled = false;
-          delBtn.textContent = "Delete";
-        }
-      };
-      card.appendChild(previewCanvas);
-      card.appendChild(info);
-      card.appendChild(delBtn);
-      body.appendChild(card);
-    });
-    const addBtn = document.createElement("button");
-    addBtn.className = "btn-add-sample";
-    addBtn.textContent = "+ Draw new sample";
-    addBtn.onclick = () => openAddSample(char, data.count, tag);
-    body.appendChild(addBtn);
-    const canvasArea = document.createElement("div");
-    canvasArea.className = "detail-canvas-area";
-    canvasArea.id = "detailCanvasArea";
-    const drawCanvas = document.createElement("canvas");
-    drawCanvas.id = "detailCanvas";
-    drawCanvas.style.cssText = "width:240px; height:120px; background:var(--surface); border-radius:var(--radius-md); border:1px solid var(--hairline); touch-action:none;";
-    drawCanvas.width = 480;
-    drawCanvas.height = 240;
-    const ctrlDiv = document.createElement("div");
-    ctrlDiv.className = "detail-controls";
-    ctrlDiv.innerHTML = `
-      <button class="btn-undo" id="detailUndo" disabled>Undo</button>
-      <button class="btn-clear" id="detailClear" disabled>Clear</button>
-      <button class="btn-accept" id="detailAccept" disabled>Save</button>
-      <button class="btn-skip" id="detailCancel">Cancel</button>
-    `;
-    canvasArea.appendChild(drawCanvas);
-    canvasArea.appendChild(ctrlDiv);
-    body.appendChild(canvasArea);
-  } catch (err) {
-    body.innerHTML = `<p style="text-align:center; color:var(--error); padding:40px; font-size:13px;">Error: ${err.message}</p>`;
-  }
-}
-
-function openAddSample(char, existingCount, tag) {
-  const area = document.getElementById("detailCanvasArea");
-  area.classList.add("show");
-  area.scrollIntoView({ behavior: "smooth" });
-  const drawCanvas = document.getElementById("detailCanvas");
-  let dStrokes = [];
-  let dCurrent = [];
-  let dDrawing = false;
-  const newCanvas = drawCanvas.cloneNode(true);
-  drawCanvas.parentNode.replaceChild(newCanvas, drawCanvas);
-  const nctx = newCanvas.getContext("2d");
-  nctx.setTransform(1, 0, 0, 1, 0, 0);
-  nctx.scale(2, 2);
-
-  function nRedraw() {
-    nctx.clearRect(0, 0, 240, 120);
-    drawGuidelines(nctx, 240, 120);
-    drawStrokes(nctx, dStrokes);
-  }
-  nRedraw();
-
-  function dGetPoint(e) {
-    const rect = newCanvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (newCanvas.width / 2 / rect.width),
-      y: (e.clientY - rect.top) * (newCanvas.height / 2 / rect.height),
-      pressure: e.pressure || 0.5,
-    };
-  }
-
-  function updateDButtons() {
-    document.getElementById("detailUndo").disabled = dStrokes.length === 0;
-    document.getElementById("detailClear").disabled = dStrokes.length === 0;
-    document.getElementById("detailAccept").disabled = dStrokes.length === 0;
-  }
-
-  newCanvas.addEventListener("pointerdown", e => {
-    if (e.pointerType === "touch") return;
-    e.preventDefault();
-    dDrawing = true;
-    dCurrent = [dGetPoint(e)];
-    newCanvas.setPointerCapture(e.pointerId);
-  });
-  newCanvas.addEventListener("pointermove", e => {
-    if (!dDrawing) return;
-    e.preventDefault();
-    const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-    for (const ce of events) {
-      const pt = dGetPoint(ce);
-      dCurrent.push(pt);
-      const prev = dCurrent[dCurrent.length - 2];
-      nctx.beginPath();
-      nctx.moveTo(prev.x, prev.y);
-      nctx.lineTo(pt.x, pt.y);
-      nctx.strokeStyle = "#0A0A0A";
-      nctx.lineWidth = 1.0 + pt.pressure * 5.0;
-      nctx.lineCap = "round";
-      nctx.lineJoin = "round";
-      nctx.stroke();
-    }
-  });
-  newCanvas.addEventListener("pointerup", e => {
-    if (!dDrawing) return;
-    e.preventDefault();
-    dDrawing = false;
-    if (dCurrent.length >= 2) dStrokes.push([...dCurrent]);
-    dCurrent = [];
-    updateDButtons();
-  });
-  newCanvas.addEventListener("pointercancel", () => { dDrawing = false; dCurrent = []; });
-
-  document.getElementById("detailUndo").onclick = () => { dStrokes.pop(); nRedraw(); updateDButtons(); };
-  document.getElementById("detailClear").onclick = () => { dStrokes = []; nRedraw(); updateDButtons(); };
-  document.getElementById("detailCancel").onclick = () => { area.classList.remove("show"); };
-  document.getElementById("detailAccept").onclick = async () => {
-    if (dStrokes.length === 0) return;
-    const btn = document.getElementById("detailAccept");
-    btn.disabled = true;
-    btn.textContent = "Saving…";
-    const strokeData = dStrokes.map(s => s.map(p => [p.x, p.y, p.pressure]));
-    const key = progressKey(char, tag);
-    try {
-      const cssW = newCanvas.width / 2;
-      const cssH = newCanvas.height / 2;
-      const saveBody = {
-        char,
-        sample_idx: existingCount,
-        strokes: strokeData,
-        canvas: {
-          width: cssW,
-          height: cssH,
-          baseline_y: cssH * 0.7,
-          xheight_y: cssH * 0.4,
-        },
-      };
-      if (tag) saveBody.tag = tag;
-      const resp = await fetch("/api/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(saveBody),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      progress[key] = (progress[key] || 0) + 1;
-      existingCount++;
-      updateDisplay();
-      area.classList.remove("show");
-      openCharDetail(char, null, tag);
-    } catch (err) {
-      alert(`Save failed: ${err.message}`);
-      btn.disabled = false;
-      btn.textContent = "Save";
-    }
-  };
-}
-
-function navigateDetail(delta) {
-  if (managerCatIdx < 0) return;
-  const cat = CATEGORIES[managerCatIdx];
-  const newIdx = managerCharIdx + delta;
-  if (newIdx < 0 || newIdx >= cat.chars.length) return;
-  managerCharIdx = newIdx;
-  openCharDetail(cat.chars[newIdx], cat.name, cat.tag);
-}
-
-function closeDetail() {
-  document.getElementById("sampleDetail").classList.remove("show");
-  renderManagerGrid();
-}
-
-// ========== INIT ==========
+// ===== Init =====
 
 async function loadProgress() {
   try {
@@ -1670,23 +1853,20 @@ async function init() {
 
   document.getElementById("btnUndo").addEventListener("click", () => { strokes.pop(); redraw(); updateButtons(); });
   document.getElementById("btnClear").addEventListener("click", clearCanvas);
-  document.getElementById("btnSkip").addEventListener("click", skip);
+  document.getElementById("btnNext").addEventListener("click", next);
   document.getElementById("btnAccept").addEventListener("click", accept);
-  document.getElementById("titleBtn").addEventListener("click", showCategoryPicker);
+  document.querySelectorAll(".sidebar-toggle").forEach(btn => {
+    btn.addEventListener("click", toggleSidebar);
+  });
   document.getElementById("btnDownload").addEventListener("click", downloadSamples);
   document.getElementById("btnReset").addEventListener("click", resetAll);
-  document.getElementById("btnManage").addEventListener("click", openManager);
-  document.getElementById("btnCloseOverlay").addEventListener("click", () => {
-    document.getElementById("overlay").classList.remove("show");
-  });
-  document.getElementById("btnCloseManager").addEventListener("click", closeManager);
-  document.getElementById("btnBackDetail").addEventListener("click", closeDetail);
-  document.getElementById("btnPrevChar").addEventListener("click", () => navigateDetail(-1));
-  document.getElementById("btnNextChar").addEventListener("click", () => navigateDetail(1));
-  document.getElementById("samplesPerChar").addEventListener("change", (e) => {
-    SAMPLES_PER_CHAR = parseInt(e.target.value, 10);
-    updateDisplay();
-  });
+  document.getElementById("btnHandedness").addEventListener("click", toggleHandedness);
+  document.getElementById("tabGuide").addEventListener("click", () => setTab("guide"));
+  document.getElementById("tabCollection").addEventListener("click", () => setTab("collection"));
+  document.getElementById("tabManager").addEventListener("click", () => setTab("manager"));
+  document.getElementById("tabSettings").addEventListener("click", () => setTab("settings"));
+  document.getElementById("btnReference").addEventListener("click", toggleReference);
+  document.getElementById("btnReference").textContent = referenceType === "matrix" ? "Matrix" : "Vector";
 
   await loadProgress();
 
@@ -1695,17 +1875,16 @@ async function init() {
     const cat = CATEGORIES[catIdx];
     for (let i = 0; i < cat.chars.length; i++) {
       const key = progressKey(cat.chars[i], cat.tag);
-      if ((progress[key] || 0) < SAMPLES_PER_CHAR) {
+      if ((progress[key] || 0) === 0) {
         currentCategory = catIdx;
         currentCharIdx = i;
-        currentSampleIdx = progress[key] || 0;
         started = true;
         break;
       }
     }
   }
-  if (!started) showCategoryPicker();
 
+  applyAppLayout();
   updateDisplay();
   updateButtons();
 }
